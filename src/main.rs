@@ -1,9 +1,9 @@
 use tetra::graphics::mesh::{Mesh, ShapeStyle};
 use tetra::graphics::text::{Font, Text};
-use tetra::graphics::{self, Color, Texture, DrawParams, TextureFormat, Rectangle};
+use tetra::graphics::{self, Color, DrawParams, Rectangle};
 use tetra::input::{self, Key, MouseButton};
 use tetra::Event;
-use tetra::math::Vec2;
+use tetra::math::{Vec2, Vec3, Mat4};
 use tetra::{Context, ContextBuilder, State};
 use rand::Rng;
 
@@ -127,12 +127,12 @@ enum Scene {
     LoginUsername,
     LoginPassword,
     Menu,
+    TransitionToDesktop,
     Desktop,
     Config,
 }
 
 struct GameState {
-    star_texture: Texture,
     scene: Scene,
     font: Font,
     
@@ -142,6 +142,9 @@ struct GameState {
     current_char: usize,
     char_timer: f32,
     boot_complete_timer: f32,
+    
+    // Transition
+    transition_timer: f32,
     
     // Login/Menu state
     input_buffer: String,
@@ -176,9 +179,6 @@ struct GameState {
 
 impl GameState {
     fn new(ctx: &mut Context) -> tetra::Result<GameState> {
-        // Create a 2x2 white pixel texture for lines/blocks
-        let star_texture = Texture::from_data(ctx, 2, 2, TextureFormat::Rgba8, &[255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255])?;
-
         // Try to load a font. 
         let font_paths = [
             "resources/font.ttf",
@@ -267,7 +267,6 @@ impl GameState {
         ];
 
         Ok(GameState {
-            star_texture,
             scene: Scene::Boot,
             font,
             boot_lines: vec![
@@ -301,6 +300,7 @@ impl GameState {
             current_char: 0,
             char_timer: 0.0,
             boot_complete_timer: 0.0,
+            transition_timer: 0.0,
             
             menu_options: vec![
                 "1. Start X Server".to_string(),
@@ -558,7 +558,10 @@ impl State for GameState {
                     }
                     Scene::Menu => {
                         match self.selected_option {
-                            0 => self.scene = Scene::Desktop,
+                            0 => {
+                                self.scene = Scene::TransitionToDesktop;
+                                self.transition_timer = 0.0;
+                            }
                             1 => self.scene = Scene::Config,
                             2 => self.logout(),
                             3 => self.reset(),
@@ -642,6 +645,12 @@ impl State for GameState {
                     }
                 }
             }
+            Scene::TransitionToDesktop => {
+                self.transition_timer += 1.0;
+                if self.transition_timer > 120.0 { // 2 seconds fade
+                    self.scene = Scene::Desktop;
+                }
+            }
             Scene::Desktop => {
                 // NPC Chat Logic
                 if self.chat_system.response_timer > 0.0 {
@@ -712,7 +721,10 @@ impl State for GameState {
 
                         // Spawn Enemies
                         self.mini_game.spawn_timer += 1.0;
-                        if self.mini_game.spawn_timer > 60.0 { // Spawn every second approx
+                        // Increase difficulty based on level
+                        let spawn_rate = if self.mini_game.level > 1 { 30.0 } else { 60.0 };
+                        
+                        if self.mini_game.spawn_timer > spawn_rate { 
                             self.mini_game.spawn_timer = 0.0;
                             let mut rng = rand::thread_rng();
                             let side = rng.gen_range(0..4);
@@ -727,9 +739,10 @@ impl State for GameState {
 
                         // Update Enemies
                         let player_pos = self.mini_game.player_pos;
+                        let enemy_speed = if self.mini_game.level > 1 { 3.0 } else { 2.0 };
                         for enemy in &mut self.mini_game.enemies {
                             let dir = (player_pos - enemy.pos).normalized();
-                            enemy.pos += dir * 2.0;
+                            enemy.pos += dir * enemy_speed;
                         }
 
                         // Collision: Bullet vs Enemy
@@ -823,7 +836,6 @@ impl State for GameState {
                         let sub = &line[0..self.current_char];
                         // Simple drawing for current line, no color parsing for partial line to keep it simple
                         let mut text = Text::new(sub, self.font.clone());
-                        let color = if sub.starts_with("[  OK  ]") { Color::GREEN } else { Color::WHITE };
                         // Actually if it starts with [ OK ] we want the OK green and rest white, but for typing effect simple is okay
                         // Let's just make it white while typing
                         text.draw(ctx, DrawParams::new().position(Vec2::new(20.0, y)).color(Color::WHITE));
@@ -875,16 +887,30 @@ impl State for GameState {
                     err_text.draw(ctx, DrawParams::new().position(Vec2::new(20.0, y)).color(Color::RED));
                 }
             }
-            Scene::Menu => {
+            Scene::Menu | Scene::TransitionToDesktop => {
+                let t = if let Scene::TransitionToDesktop = self.scene {
+                    (self.transition_timer / 120.0).clamp(0.0, 1.0)
+                } else {
+                    0.0
+                };
+
+                if t > 0.0 {
+                    let scale = 1.0 + t * t * 2.0; // Strong zoom
+                    // Center is 400, 300
+                    let trans_to_origin = Mat4::<f32>::translation_3d(Vec3::new(-400.0, -300.0, 0.0));
+                    let scaling = Mat4::<f32>::scaling_3d(Vec3::new(scale, scale, 1.0));
+                    let trans_back = Mat4::<f32>::translation_3d(Vec3::new(400.0, 300.0, 0.0));
+                    
+                    let transform = trans_back * scaling * trans_to_origin;
+                    graphics::set_transform_matrix(ctx, transform);
+                }
+
                 // Draw Login Prompt (Static history)
                 let mut y = 20.0;
                 let mut login_text = Text::new("agalar login: root", self.font.clone());
                 login_text.draw(ctx, DrawParams::new().position(Vec2::new(20.0, y)).color(Color::WHITE));
                 
                 y += 24.0;
-                // Password line (hidden or just skipped in history usually, but let's show prompt)
-                // Actually usually password line is not shown in history if cleared, but let's show it for continuity
-                // Or better, just show the welcome message
                 
                 y += 24.0;
                 let mut welcome = Text::new("Last login: Fri Dec 27 12:00:00 on tty1", self.font.clone());
@@ -907,9 +933,14 @@ impl State for GameState {
                     y += 20.0;
                 }
                 
-                // Fake shell prompt at bottom
-                let mut shell_prompt = Text::new("root@agalar:~# _", self.font.clone());
-                shell_prompt.draw(ctx, DrawParams::new().position(Vec2::new(20.0, y + 20.0)).color(Color::WHITE));
+                // Transition Effect
+                if t > 0.0 {
+                    graphics::set_transform_matrix(ctx, Mat4::identity());
+                    
+                    let alpha = t * t * t; // Cubic ease-in
+                    let fade_rect = Mesh::rectangle(ctx, ShapeStyle::Fill, Rectangle::new(0.0, 0.0, SCREEN_WIDTH as f32, SCREEN_HEIGHT as f32)).unwrap();
+                    fade_rect.draw(ctx, DrawParams::new().color(Color::rgba(1.0, 1.0, 1.0, alpha)));
+                }
             }
             Scene::Desktop => {
                 if self.mini_game.active {
