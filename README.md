@@ -2,10 +2,10 @@
 
 A retro-style Linux operating system simulation and game built with Rust and Tetra.
 
-<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/3a240a19-ac6d-4652-87d2-9b260613fddf" />
-<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/ecde34d1-4a8e-42d2-bba6-71ea7a30b298" />
-<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/d3fa238b-617f-49b9-82f4-48d82d96e35f" />
-<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/07b2d22a-731f-422e-be83-1ce848516a78" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/c0ac4d5b-6e44-4cf3-83a3-ed259c8ec5e9" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/d57034f1-ad5b-4142-bc7b-d8620492570c" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/91c3a2c2-5af5-4ee0-ac03-952339a1b446" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/b699a9d1-22dc-4f56-a50e-ea50e4be47af" />
 
 ## Overview
 
