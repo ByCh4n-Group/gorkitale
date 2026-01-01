@@ -11,10 +11,21 @@ use rand::Rng;
 use crate::defs::{Scene, Language, Direction, SCREEN_WIDTH, SCREEN_HEIGHT};
 use crate::combat::CombatData;
 
+#[derive(Clone, Debug)]
+pub struct User {
+    pub username: String,
+    pub teblig_count: u32,
+    pub cihad_count: u32,
+    pub tekfir_count: u32,
+}
+
 pub struct GameState {
     pub scene: Scene,
     pub font: Font,
     pub language: Language,
+    
+    pub users: Vec<User>,
+    pub current_user: Option<User>,
     
     // Boot state
     pub boot_lines: Vec<String>,
@@ -106,6 +117,9 @@ pub struct GameState {
     // Ayasofya (Lazy Loaded)
     pub ayasofya_giris_texture: Option<Texture>,
     pub ayasofya_ici_texture: Option<Texture>,
+    pub player_texture_fes: Option<Texture>,
+    pub player_texture_takke: Option<Texture>,
+    pub mosque_outfit: u8, // 0: None, 1: Fes, 2: Takke
 
     // Loading State
     pub loading_step: usize,
@@ -188,16 +202,36 @@ impl GameState {
         // Lazy load these later to speed up startup
         let ayasofya_giris_texture = None;
         let ayasofya_ici_texture = None;
+        let player_texture_fes = None;
+        let player_texture_takke = None;
 
         let boot_lines = vec![
                 "Starting VibeCoded Linux version 6.9.420...".to_string(),
         ];
         let boot_text_cache = vec![None; boot_lines.len()];
 
+        // Load Users
+        let mut users = Vec::new();
+        if let Ok(content) = std::fs::read_to_string("users.db") {
+            for line in content.lines() {
+                let parts: Vec<&str> = line.split(',').collect();
+                if parts.len() >= 4 {
+                    users.push(User {
+                        username: parts[0].to_string(),
+                        teblig_count: parts[1].parse().unwrap_or(0),
+                        cihad_count: parts[2].parse().unwrap_or(0),
+                        tekfir_count: parts[3].parse().unwrap_or(0),
+                    });
+                }
+            }
+        }
+
         Ok(GameState {
             scene: Scene::Boot,
             font,
             language: Language::English,
+            users,
+            current_user: None,
             boot_lines,
             boot_text_cache,
             current_line: 0,
@@ -278,6 +312,9 @@ impl GameState {
 
             ayasofya_giris_texture,
             ayasofya_ici_texture,
+            player_texture_fes,
+            player_texture_takke,
+            mosque_outfit: 0,
             loading_step: 0,
             loading_substep: 0,
             spinner_timer: 0.0,
@@ -384,6 +421,23 @@ impl GameState {
         }
     }
 
+    pub fn save_users(&mut self) {
+        // Sync current_user back to users list
+        if let Some(curr) = &self.current_user {
+            if let Some(u) = self.users.iter_mut().find(|u| u.username == curr.username) {
+                u.teblig_count = curr.teblig_count;
+                u.cihad_count = curr.cihad_count;
+                u.tekfir_count = curr.tekfir_count;
+            }
+        }
+
+        let mut content = String::new();
+        for u in &self.users {
+            content.push_str(&format!("{},{},{},{}\n", u.username, u.teblig_count, u.cihad_count, u.tekfir_count));
+        }
+        std::fs::write("users.db", content).ok();
+    }
+
     pub fn assign_asset(&mut self, index: usize, asset: crate::assets::LoadedAsset) {
         use crate::assets::LoadedAsset;
         match (index, asset) {
@@ -405,9 +459,37 @@ impl GameState {
             (15, LoadedAsset::Texture(t)) => self.ayasofya_giris_texture = Some(t),
             (16, LoadedAsset::Texture(t)) => self.ayasofya_ici_texture = Some(t),
             (17, LoadedAsset::Texture(t)) => self.bone_texture = Some(t),
+            (18, LoadedAsset::Texture(t)) => self.player_texture_fes = Some(t),
+            (19, LoadedAsset::Texture(t)) => self.player_texture_takke = Some(t),
             _ => {
                 println!("Warning: Asset index {} mismatch or unhandled", index);
             }
+        }
+    }
+
+    pub fn is_asset_loaded(&self, index: usize) -> bool {
+        match index {
+            0 => self.player_texture_front.is_some(),
+            1 => self.player_texture_left.is_some(),
+            2 => self.player_texture_right.is_some(),
+            3 => self.bg_texture.is_some(),
+            4 => self.npc_gaster_standing.is_some(),
+            5 => self.npc_gaster_talking.is_some(),
+            6 => self.rarity_texture.is_some(),
+            7 => self.eilish_texture.is_some(),
+            8 => self.sans_texture.is_some(),
+            9 => self.sans_combat_texture.is_some(),
+            10 => self.sans_shrug_texture.is_some(),
+            11 => self.sans_handshake_texture.is_some(),
+            12 => self.heart_texture.is_some(),
+            13 => self.musicbox_texture.is_some(),
+            14 => self.music_track.is_some(),
+            15 => self.ayasofya_giris_texture.is_some(),
+            16 => self.ayasofya_ici_texture.is_some(),
+            17 => self.bone_texture.is_some(),
+            18 => self.player_texture_fes.is_some(),
+            19 => self.player_texture_takke.is_some(),
+            _ => false,
         }
     }
 }
@@ -445,15 +527,23 @@ impl State for GameState {
             Event::KeyPressed { key: Key::Enter } => {
                 match self.scene {
                     Scene::LoginUsername => {
-                        if self.input_buffer == "root" {
+                        let username = self.input_buffer.trim().to_string();
+                        if username == "hafız gece" || username == "gecee" || username == "gece" {
+                            self.login_error = Some("This username is banned.".to_string());
+                            self.input_buffer.clear();
+                        } else if username == "root" {
+                            self.current_user = Some(User { username: "root".to_string(), teblig_count: 0, cihad_count: 0, tekfir_count: 0 });
+                            self.scene = Scene::LoginPassword;
+                            self.input_buffer.clear();
+                            self.login_error = None;
+                        } else if let Some(user) = self.users.iter().find(|u| u.username == username).cloned() {
+                            self.current_user = Some(user);
                             self.scene = Scene::LoginPassword;
                             self.input_buffer.clear();
                             self.login_error = None;
                         } else {
                             self.login_error = Some("Login incorrect".to_string());
                             self.input_buffer.clear();
-                            // Reset to username after a short delay or immediately? 
-                            // For simplicity, just clear and stay on username
                         }
                     }
                     Scene::LoginPassword => {
@@ -491,131 +581,171 @@ impl State for GameState {
                     }
                     Scene::Menu => {
                         let cmd = self.shell_input_buffer.trim().to_string();
-                        self.add_shell_message(format!("root@vibecoded:~# {}", cmd), Color::WHITE);
+                        let username = self.current_user.as_ref().map(|u| u.username.clone()).unwrap_or("unknown".to_string());
+                        self.add_shell_message(format!("{}@vibecoded:~# {}", username, cmd), Color::WHITE);
                         
-                        match cmd.as_str() {
-                            "neofetch" => {
-                                let _red = Color::RED;
-                                let white = Color::WHITE;
-                                
-                                // ASCII Heart Art
-                                let art = [
-                                    "  RRRR   RRRR  ",
-                                    " RRRRRR RRRRRR ",
-                                    "RRRRRRRRRRRRRRR",
-                                    " RRRRRRRRRRRRR ",
-                                    "  RRRRRRRRRRR  ",
-                                    "    RRRRRRR    ",
-                                    "      RRR      ",
-                                    "       R       ",
-                                ];
-                                
-                                let info = [
-                                    "root@vibecoded",
-                                    "--------------",
-                                    "OS: VibeCoded Linux",
-                                    "Host: Virtual Machine",
-                                    "Kernel: 6.9.420-vibecoded",
-                                    "Uptime: 1337 mins",
-                                    "Shell: vibesh",
-                                    "Resolution: 800x600",
-                                    "DE: Tetra",
-                                    "CPU: Virtual Vibe Processor",
-                                    "Memory: 69MB / 420MB",
-                                ];
-
-                                for i in 0..std::cmp::max(art.len(), info.len()) {
-                                    let art_line = if i < art.len() { art[i] } else { "               " };
-                                    let info_text = if i < info.len() { info[i] } else { "" };
-                                    
-                                    let line = format!("{}  {}", art_line, info_text);
-                                    // Use red for the first few lines (header) if we could, but for now just white or red based on line index?
-                                    // Let's just use white for readability, or maybe red for the heart lines?
-                                    // Since we can't mix colors easily per line, let's just use White.
-                                    self.add_shell_message(line, white);
-                                }
-                                self.add_shell_message("".to_string(), white);
-                            }
-                            "startx" => {
-                                self.scene = Scene::TransitionToDesktop;
-                                self.transition_timer = 0.0;
-                                self.session_started = true;
-                                // Reset game state on start
-                                self.player_health = 100.0;
-                                self.current_stage = 1;
-                                self.player_pos = Vec2::new(400.0, 300.0);
-                                self.player_direction = Direction::Front;
-                            }
-                            "help" => {
-                                match self.language {
-                                    Language::English => {
-                                        self.add_shell_message("GNU bash, version 5.0.17(1)-release (x86_64-pc-linux-gnu)".to_string(), Color::rgb(0.7, 0.7, 0.7));
-                                        self.add_shell_message("These shell commands are defined internally.  Type `help' to see this list.".to_string(), Color::rgb(0.7, 0.7, 0.7));
-                                        self.add_shell_message("".to_string(), Color::WHITE);
-                                        self.add_shell_message("  startx      Start the game".to_string(), Color::GREEN);
-                                        self.add_shell_message("  neofetch    Show system information".to_string(), Color::WHITE);
-                                        self.add_shell_message("  music       Toggle background music (Disco Mode)".to_string(), Color::WHITE);
-                                        self.add_shell_message("  config      Open system configuration".to_string(), Color::WHITE);
-                                        self.add_shell_message("  logout      Log out of the system".to_string(), Color::WHITE);
-                                        self.add_shell_message("  reboot      Reboot the system".to_string(), Color::WHITE);
-                                        self.add_shell_message("  shutdown    Power off the system".to_string(), Color::WHITE);
-                                        self.add_shell_message("  clear       Clear the terminal screen".to_string(), Color::WHITE);
-                                        self.add_shell_message("  whoami      Print effective userid".to_string(), Color::WHITE);
-                                        self.add_shell_message("  uname -a    Print system information".to_string(), Color::WHITE);
-                                    }
-                                    Language::Turkish => {
-                                        self.add_shell_message("GNU bash, surum 5.0.17(1)-release (x86_64-pc-linux-gnu)".to_string(), Color::rgb(0.7, 0.7, 0.7));
-                                        self.add_shell_message("Bu kabuk komutlari dahili olarak tanimlanmistir. Listeyi gormek icin `help' yazin.".to_string(), Color::rgb(0.7, 0.7, 0.7));
-                                        self.add_shell_message("".to_string(), Color::WHITE);
-                                        self.add_shell_message("  startx      Grafik masaustu ortamini baslat (Oyun)".to_string(), Color::GREEN);
-                                        self.add_shell_message("  neofetch    Sistem bilgilerini goster".to_string(), Color::WHITE);
-                                        self.add_shell_message("  music       Arka plan muzigini ac/kapat (Disko Modu)".to_string(), Color::WHITE);
-                                        self.add_shell_message("  config      Sistem yapilandirmasini ac".to_string(), Color::WHITE);
-                                        self.add_shell_message("  logout      Sistemden cikis yap".to_string(), Color::WHITE);
-                                        self.add_shell_message("  reboot      Sistemi yeniden baslat".to_string(), Color::WHITE);
-                                        self.add_shell_message("  shutdown    Sistemi kapat".to_string(), Color::WHITE);
-                                        self.add_shell_message("  clear       Terminal ekranini temizle".to_string(), Color::WHITE);
-                                        self.add_shell_message("  whoami      Gecerli kullanici kimligini yazdir".to_string(), Color::WHITE);
-                                        self.add_shell_message("  uname -a    Sistem bilgilerini yazdir".to_string(), Color::WHITE);
-                                    }
-                                }
-                            }
-                            "config" => self.scene = Scene::Config,
-                            "logout" | "exit" => self.logout(),
-                            "reboot" => self.reset(),
-                            "shutdown" => std::process::exit(0),
-                            "clear" => self.shell_history.clear(),
-                            "whoami" => self.add_shell_message("root".to_string(), Color::WHITE),
-                            "uname -a" => self.add_shell_message("Linux vibecoded 6.9.420-vibecoded #1 SMP PREEMPT Fri Dec 30 13:37:00 UTC 2025 x86_64 GNU/Linux".to_string(), Color::WHITE),
-                            "music" | "disco" => {
-                                if self.scene == Scene::AyasofyaInside {
-                                    self.add_shell_message("Music cannot be played in the mosque.".to_string(), Color::RED);
-                                } else if self.music_playing {
-                                    if let Some(instance) = &mut self.music_instance {
-                                        instance.stop();
-                                    }
-                                    self.music_playing = false;
-                                    self.add_shell_message("Music stopped.".to_string(), Color::WHITE);
+                        if cmd == "adduser" || cmd.starts_with("adduser ") {
+                            let name = if cmd.len() > 8 { cmd[8..].trim() } else { "" };
+                            if !name.is_empty() {
+                                if name == "hafız gece" || name == "gecee" || name == "gece" {
+                                    self.add_shell_message(format!("Username '{}' cannot be taken.", name), Color::RED);
+                                } else if self.users.iter().any(|u| u.username == name) {
+                                    self.add_shell_message(format!("User '{}' already exists.", name), Color::rgb(1.0, 1.0, 0.0));
                                 } else {
-                                    if let Some(track) = &self.music_track {
-                                        if let Ok(instance) = track.play(ctx) {
-                                            instance.set_repeating(true);
-                                            self.music_instance = Some(instance);
-                                            self.music_playing = true;
-                                            self.add_shell_message("Music started! Disco mode activated.".to_string(), Color::GREEN);
-                                        } else {
-                                            self.add_shell_message("Failed to play music.".to_string(), Color::RED);
-                                        }
-                                    } else {
-                                        self.add_shell_message("Music track not loaded.".to_string(), Color::RED);
+                                    let new_user = User { username: name.to_string(), teblig_count: 0, cihad_count: 0, tekfir_count: 0 };
+                                    self.users.push(new_user);
+                                    // Save to file
+                                    let mut content = String::new();
+                                    for u in &self.users {
+                                        content.push_str(&format!("{},{},{},{}\n", u.username, u.teblig_count, u.cihad_count, u.tekfir_count));
+                                    }
+                                    std::fs::write("users.db", content).ok();
+                                    self.add_shell_message(format!("User '{}' created.", name), Color::GREEN);
+                                }
+                            } else {
+                                self.add_shell_message("Usage: adduser <username>".to_string(), Color::RED);
+                                self.add_shell_message("Example: adduser muffinkins".to_string(), Color::rgb(0.7, 0.7, 0.7));
+                            }
+                        } else {
+                            match cmd.as_str() {
+                                "neofetch" => {
+                                    let _red = Color::RED;
+                                    let white = Color::WHITE;
+                                    
+                                    // ASCII Heart Art
+                                    let art = [
+                                        "  RRRR   RRRR  ",
+                                        " RRRRRR RRRRRR ",
+                                        "RRRRRRRRRRRRRRR",
+                                        " RRRRRRRRRRRRR ",
+                                        "  RRRRRRRRRRR  ",
+                                        "    RRRRRRR    ",
+                                        "      RRR      ",
+                                        "       R       ",
+                                    ];
+                                    
+                                    let user = self.current_user.as_ref().unwrap();
+                                    let info = [
+                                        format!("{}@vibecoded", user.username),
+                                        "--------------".to_string(),
+                                        "OS: VibeCoded Linux".to_string(),
+                                        "Host: Virtual Machine".to_string(),
+                                        "Kernel: 6.9.420-vibecoded".to_string(),
+                                        "Uptime: 1337 mins".to_string(),
+                                        "Shell: vibesh".to_string(),
+                                        "Resolution: 800x600".to_string(),
+                                        "DE: Tetra".to_string(),
+                                        "CPU: Virtual Vibe Processor".to_string(),
+                                        format!("Teblig Count: {}", user.teblig_count),
+                                        format!("Cihad Count: {}", user.cihad_count),
+                                        format!("Tekfir Count: {}", user.tekfir_count),
+                                    ];
+
+                                    for i in 0..std::cmp::max(art.len(), info.len()) {
+                                        let art_line = if i < art.len() { art[i] } else { "               " };
+                                        let info_text = if i < info.len() { &info[i] } else { "" };
+                                        
+                                        let line = format!("{}  {}", art_line, info_text);
+                                        self.add_shell_message(line, white);
+                                    }
+                                    self.add_shell_message("".to_string(), white);
+                                }
+                                "users" => {
+                                    self.add_shell_message("Registered Users:".to_string(), Color::WHITE);
+                                    let usernames: Vec<String> = self.users.iter().map(|u| u.username.clone()).collect();
+                                    for name in usernames {
+                                        self.add_shell_message(format!(" - {}", name), Color::WHITE);
                                     }
                                 }
-                            }
-                            "" => {}, // Do nothing on empty enter
-                            _ => {
-                                match self.language {
-                                    Language::English => self.add_shell_message(format!("bash: {}: command not found", cmd), Color::RED),
-                                    Language::Turkish => self.add_shell_message(format!("bash: {}: komut bulunamadi", cmd), Color::RED),
+                                "startx" => {
+                                    if username == "root" {
+                                        self.add_shell_message("startx: access denied for root. Please create a user with 'adduser'.".to_string(), Color::RED);
+                                    } else {
+                                        self.scene = Scene::TransitionToDesktop;
+                                        self.transition_timer = 0.0;
+                                        self.session_started = true;
+                                        // Reset game state on start
+                                        self.player_health = 100.0;
+                                        self.current_stage = 1;
+                                        self.player_pos = Vec2::new(400.0, 300.0);
+                                        self.player_direction = Direction::Front;
+                                    }
+                                }
+                                "help" => {
+                                    match self.language {
+                                        Language::English => {
+                                            self.add_shell_message("GNU bash, version 5.0.17(1)-release (x86_64-pc-linux-gnu)".to_string(), Color::rgb(0.7, 0.7, 0.7));
+                                            self.add_shell_message("These shell commands are defined internally.  Type `help' to see this list.".to_string(), Color::rgb(0.7, 0.7, 0.7));
+                                            self.add_shell_message("".to_string(), Color::WHITE);
+                                            self.add_shell_message("  startx      Start the game".to_string(), Color::GREEN);
+                                            self.add_shell_message("  adduser     Create a new user".to_string(), Color::WHITE);
+                                            self.add_shell_message("  users       List all users".to_string(), Color::WHITE);
+                                            self.add_shell_message("  neofetch    Show system information".to_string(), Color::WHITE);
+                                            self.add_shell_message("  music       Toggle background music (Disco Mode)".to_string(), Color::WHITE);
+                                            self.add_shell_message("  config      Open system configuration".to_string(), Color::WHITE);
+                                            self.add_shell_message("  logout      Log out of the system".to_string(), Color::WHITE);
+                                            self.add_shell_message("  reboot      Reboot the system".to_string(), Color::WHITE);
+                                            self.add_shell_message("  shutdown    Power off the system".to_string(), Color::WHITE);
+                                            self.add_shell_message("  clear       Clear the terminal screen".to_string(), Color::WHITE);
+                                            self.add_shell_message("  whoami      Print effective userid".to_string(), Color::WHITE);
+                                            self.add_shell_message("  uname -a    Print system information".to_string(), Color::WHITE);
+                                        }
+                                        Language::Turkish => {
+                                            self.add_shell_message("GNU bash, surum 5.0.17(1)-release (x86_64-pc-linux-gnu)".to_string(), Color::rgb(0.7, 0.7, 0.7));
+                                            self.add_shell_message("Bu kabuk komutlari dahili olarak tanimlanmistir. Listeyi gormek icin `help' yazin.".to_string(), Color::rgb(0.7, 0.7, 0.7));
+                                            self.add_shell_message("".to_string(), Color::WHITE);
+                                            self.add_shell_message("  startx      Grafik masaustu ortamini baslat (Oyun)".to_string(), Color::GREEN);
+                                            self.add_shell_message("  adduser     Yeni kullanici olustur".to_string(), Color::WHITE);
+                                            self.add_shell_message("  users       Kullanicilari listele".to_string(), Color::WHITE);
+                                            self.add_shell_message("  neofetch    Sistem bilgilerini goster".to_string(), Color::WHITE);
+                                            self.add_shell_message("  music       Arka plan muzigini ac/kapat (Disko Modu)".to_string(), Color::WHITE);
+                                            self.add_shell_message("  config      Sistem yapilandirmasini ac".to_string(), Color::WHITE);
+                                            self.add_shell_message("  logout      Sistemden cikis yap".to_string(), Color::WHITE);
+                                            self.add_shell_message("  reboot      Sistemi yeniden baslat".to_string(), Color::WHITE);
+                                            self.add_shell_message("  shutdown    Sistemi kapat".to_string(), Color::WHITE);
+                                            self.add_shell_message("  clear       Terminal ekranini temizle".to_string(), Color::WHITE);
+                                            self.add_shell_message("  whoami      Gecerli kullanici kimligini yazdir".to_string(), Color::WHITE);
+                                            self.add_shell_message("  uname -a    Sistem bilgilerini yazdir".to_string(), Color::WHITE);
+                                        }
+                                    }
+                                }
+                                "config" => self.scene = Scene::Config,
+                                "logout" | "exit" => self.logout(),
+                                "reboot" => self.reset(),
+                                "shutdown" => std::process::exit(0),
+                                "clear" => self.shell_history.clear(),
+                                "whoami" => self.add_shell_message(username, Color::WHITE),
+                                "uname -a" => self.add_shell_message("Linux vibecoded 6.9.420-vibecoded #1 SMP PREEMPT Fri Dec 30 13:37:00 UTC 2025 x86_64 GNU/Linux".to_string(), Color::WHITE),
+                                "music" | "disco" => {
+                                    if self.scene == Scene::AyasofyaInside {
+                                        self.add_shell_message("Music cannot be played in the mosque.".to_string(), Color::RED);
+                                    } else if self.music_playing {
+                                        if let Some(instance) = &mut self.music_instance {
+                                            instance.stop();
+                                        }
+                                        self.music_playing = false;
+                                        self.add_shell_message("Music stopped.".to_string(), Color::WHITE);
+                                    } else {
+                                        if let Some(track) = &self.music_track {
+                                            if let Ok(instance) = track.play(ctx) {
+                                                instance.set_repeating(true);
+                                                self.music_instance = Some(instance);
+                                                self.music_playing = true;
+                                                self.add_shell_message("Music started! Disco mode activated.".to_string(), Color::GREEN);
+                                            } else {
+                                                self.add_shell_message("Failed to play music.".to_string(), Color::RED);
+                                            }
+                                        } else {
+                                            self.add_shell_message("Music track not loaded.".to_string(), Color::RED);
+                                        }
+                                    }
+                                }
+                                "" => {}, // Do nothing on empty enter
+                                _ => {
+                                    match self.language {
+                                        Language::English => self.add_shell_message(format!("bash: {}: command not found", cmd), Color::RED),
+                                        Language::Turkish => self.add_shell_message(format!("bash: {}: komut bulunamadi", cmd), Color::RED),
+                                    }
                                 }
                             }
                         }
@@ -757,13 +887,22 @@ impl State for GameState {
                             };
 
                             if !asset_name.is_empty() && self.loading_step < asset_count {
-                                self.boot_lines.push(format!("[ *    ] Loading asset: {}", asset_name));
-                                self.boot_text_cache.push(None);
-                                self.current_line = self.boot_lines.len();
-                                self.loading_substep = 1;
-                                self.char_timer = 0.0; // Reset to allow draw
-                                self.spinner_index = 0;
-                                self.spinner_direction = 1;
+                                if self.is_asset_loaded(self.loading_step) {
+                                     // Skip spinner if already loaded
+                                     self.boot_lines.push(format!("[  OK  ] Loaded asset: {}", asset_name));
+                                     self.boot_text_cache.push(None);
+                                     self.current_line = self.boot_lines.len();
+                                     self.loading_step += 1;
+                                     self.char_timer = 0.0;
+                                } else {
+                                     self.boot_lines.push(format!("[ *    ] Loading asset: {}", asset_name));
+                                     self.boot_text_cache.push(None);
+                                     self.current_line = self.boot_lines.len();
+                                     self.loading_substep = 1;
+                                     self.char_timer = 0.0;
+                                     self.spinner_index = 0;
+                                     self.spinner_direction = 1;
+                                }
                             } else if self.loading_step == asset_count {
                                 // Final step
                                 self.boot_lines.push("Welcome to VibeCoded Linux 1.0 LTS (tty1)".to_string());
@@ -780,16 +919,20 @@ impl State for GameState {
                         }
                         1 => {
                             // Step 1: Perform Load and Update Text
-                            // Simulate delay for animation to be visible
-                            if self.char_timer < 20.0 { // Wait 20 frames to show animation
+                            let already_loaded = self.is_asset_loaded(self.loading_step);
+                            
+                            // Simulate delay for animation to be visible ONLY if not already loaded
+                            if !already_loaded && self.char_timer < 20.0 { // Wait 20 frames to show animation
                                 return Ok(());
                             }
 
                             let mut loaded_text = String::new();
                             if self.loading_step < crate::assets::ASSET_LIST.len() {
-                                let asset = crate::assets::load_asset_by_index(ctx, self.loading_step)?;
                                 let name = crate::assets::ASSET_LIST[self.loading_step].name;
-                                self.assign_asset(self.loading_step, asset);
+                                if !already_loaded {
+                                    let asset = crate::assets::load_asset_by_index(ctx, self.loading_step)?;
+                                    self.assign_asset(self.loading_step, asset);
+                                }
                                 loaded_text = format!("[  OK  ] Loaded asset: {}", name);
                             }
 
@@ -978,8 +1121,9 @@ impl State for GameState {
                         y += 20.0;
                     }
                 } else {
-                    // If password state, draw "root" as already entered
-                    let full_text = format!("{}root", login_prompt);
+                    // If password state, draw username as already entered
+                    let username = self.current_user.as_ref().map(|u| u.username.clone()).unwrap_or("unknown".to_string());
+                    let full_text = format!("{}{}", login_prompt, username);
                     let mut text = Text::new(full_text, self.font.clone());
                     text.draw(ctx, DrawParams::new().position(Vec2::new(20.0, y)).color(Color::WHITE));
                     y += 24.0;
@@ -1034,7 +1178,8 @@ impl State for GameState {
                 }
                 
                 // Draw Prompt
-                let prompt = format!("root@vibecoded:~# {}{}", self.shell_input_buffer, if self.shell_cursor_visible { "_" } else { "" });
+                let username = self.current_user.as_ref().map(|u| u.username.clone()).unwrap_or("unknown".to_string());
+                let prompt = format!("{}@vibecoded:~# {}{}", username, self.shell_input_buffer, if self.shell_cursor_visible { "_" } else { "" });
                 let lines = wrap_text(&prompt, 75);
                 for line in lines {
                     let mut prompt_text = Text::new(line, self.font.clone());

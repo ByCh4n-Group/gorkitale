@@ -29,37 +29,224 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
             }
             if input::is_key_pressed(ctx, Key::Z) || input::is_key_pressed(ctx, Key::Enter) || input::is_key_pressed(ctx, Key::F) {
                 match state.combat_data.menu_selection {
-                    0 => { // Fight
+                    0 => { // Cihad (Attack)
                         state.combat_data.turn = CombatTurn::Fighting;
                         state.combat_data.timer = 0.0;
                         state.combat_data.attack_bar_active = true;
                         state.combat_data.attack_bar_pos = 50.0;
                         state.combat_data.action_text = "".to_string();
                     }
-                    1 => { // Act
-                        state.combat_data.turn = CombatTurn::Acting;
-                        let acts = [
-                            "Check: Sans 1 ATK 1 DEF.\nThe easiest enemy. Can only deal 1 damage.",
-                            "You told a joke about a skeleton.\nSans smiled.",
-                            "You asked Sans to stop fighting.\nHe didn't respond.",
-                            "You insulted Sans.\nHe just shrugged.",
-                            "You looked at Sans.\nHe's still smiling."
-                        ];
-                        let mut rng = rand::thread_rng();
-                        state.combat_data.action_text = acts[rng.gen_range(0..acts.len())].to_string();
+                    1 => { // Tekfir (Act)
+                        state.combat_data.turn = CombatTurn::TekfirSubMenu;
+                        state.combat_data.sub_menu_selection = 0;
                     }
                     2 => { // Item
-                        state.combat_data.turn = CombatTurn::Acting; // Reuse acting state for now
-                        state.combat_data.action_text = "You ate the Legendary Hero.\nYou recovered 40 HP!".to_string();
-                        state.player_health = (state.player_health + 40.0).min(100.0);
+                        state.combat_data.turn = CombatTurn::ItemSubMenu;
+                        state.combat_data.sub_menu_selection = 0;
                     }
-                    3 => { // Mercy
-                        state.combat_data.turn = CombatTurn::Mercy;
-                        state.combat_data.action_text = "You spared Sans.".to_string();
+                    3 => { // Tebliğ (Mercy)
+                        state.combat_data.turn = CombatTurn::TebligSubMenu;
+                        state.combat_data.sub_menu_selection = 0;
                     }
                     _ => {}
                 }
             }
+        }
+        CombatTurn::TekfirSubMenu => {
+             if input::is_key_pressed(ctx, Key::Up) {
+                 if state.combat_data.sub_menu_selection > 0 {
+                     state.combat_data.sub_menu_selection -= 1;
+                 }
+             }
+             if input::is_key_pressed(ctx, Key::Down) {
+                 if state.combat_data.sub_menu_selection < 8 {
+                     state.combat_data.sub_menu_selection += 1;
+                 }
+             }
+             if input::is_key_pressed(ctx, Key::X) {
+                 state.combat_data.turn = CombatTurn::Menu;
+             }
+             if input::is_key_pressed(ctx, Key::Z) || input::is_key_pressed(ctx, Key::Enter) {
+                 state.combat_data.turn = CombatTurn::ResultText;
+                 
+                 // Update stats
+                 if let Some(user) = &mut state.current_user {
+                     user.tekfir_count += 1;
+                 }
+                 state.save_users();
+
+                 let mut rng = rand::thread_rng();
+                 match state.combat_data.sub_menu_selection {
+                     0 => { // Müşrik
+                         let texts = [
+                             "Ona Müşrik dedin.\nSana güldü.",
+                             "Ona Müşrik dedin.\n'Sen de kimsin?' dedi.",
+                             "Ona Müşrik dedin.\nUmursamadı bile."
+                         ];
+                         state.combat_data.action_text = texts[rng.gen_range(0..texts.len())].to_string();
+                     },
+                     1 => { // Fasık
+                         let texts = [
+                             "Ona Fasık dedin.\nUmursamadı.",
+                             "Ona Fasık dedin.\nEsneyerek cevap verdi.",
+                             "Ona Fasık dedin.\nSana acıyarak baktı."
+                         ];
+                         state.combat_data.action_text = texts[rng.gen_range(0..texts.len())].to_string();
+                     },
+                     2 => { // Münafık
+                         let texts = [
+                             "Ona Münafık dedin.\nOmuz silkti.",
+                             "Ona Münafık dedin.\n'Kanıtın var mı?' dedi.",
+                             "Ona Münafık dedin.\nGülüp geçti."
+                         ];
+                         state.combat_data.action_text = texts[rng.gen_range(0..texts.len())].to_string();
+                     },
+                     3 => { // Kafir
+                         let texts = [
+                             "Ona Kafir dedin.\nSırıttı.",
+                             "Ona Kafir dedin.\n'Bunu iltifat sayarım' dedi.",
+                             "Ona Kafir dedin.\nSeni ciddiye almadı."
+                         ];
+                         state.combat_data.action_text = texts[rng.gen_range(0..texts.len())].to_string();
+                     },
+                     4 => { // Zındık
+                         let texts = [
+                             "Ona Zındık dedin.\nKahkaha attı.",
+                             "Ona Zındık dedin.\n'Eski moda bir hakaret' dedi.",
+                             "Ona Zındık dedin.\nSadece başını salladı."
+                         ];
+                         state.combat_data.action_text = texts[rng.gen_range(0..texts.len())].to_string();
+                     },
+                     5 => { // Tağut
+                         let texts = [
+                             "Ona Tağut dedin.\nGöz kırptı.",
+                             "Ona Tağut dedin.\n'Gücümü kabul ediyorsun' dedi.",
+                             "Ona Tağut dedin.\nSana tepeden baktı."
+                         ];
+                         state.combat_data.action_text = texts[rng.gen_range(0..texts.len())].to_string();
+                     },
+                     6 => { // Deccal
+                         let texts = [
+                             "Ona Deccal dedin.\n'Tek gözüm bile yeter' dedi.",
+                             "Ona Deccal dedin.\nAlnını gösterdi.",
+                             "Ona Deccal dedin.\n'Daha zamanı gelmedi' dedi."
+                         ];
+                         state.combat_data.action_text = texts[rng.gen_range(0..texts.len())].to_string();
+                     },
+                     7 => { // Ebu Cehil
+                         let texts = [
+                             "Ona Ebu Cehil dedin.\n'Cehalet mutluluktur' dedi.",
+                             "Ona Ebu Cehil dedin.\nKarpuz fırlattı.",
+                             "Ona Ebu Cehil dedin.\n'Bedir'de görüşürüz' dedi."
+                         ];
+                         state.combat_data.action_text = texts[rng.gen_range(0..texts.len())].to_string();
+                     },
+                     8 => { // Yecüc
+                         let texts = [
+                             "Ona Yecüc dedin.\n'Mecüc nerede?' diye sordu.",
+                             "Ona Yecüc dedin.\nDuvarı kemirmeye başladı.",
+                             "Ona Yecüc dedin.\nSürü halinde saldırdı."
+                         ];
+                         state.combat_data.action_text = texts[rng.gen_range(0..texts.len())].to_string();
+                     },
+                     _ => {}
+                 }
+             }
+        }
+        CombatTurn::ItemSubMenu => {
+             if input::is_key_pressed(ctx, Key::Up) {
+                 if state.combat_data.sub_menu_selection > 0 {
+                     state.combat_data.sub_menu_selection -= 1;
+                 }
+             }
+             if input::is_key_pressed(ctx, Key::Down) {
+                 if state.combat_data.sub_menu_selection < 3 {
+                     state.combat_data.sub_menu_selection += 1;
+                 }
+             }
+             if input::is_key_pressed(ctx, Key::X) {
+                 state.combat_data.turn = CombatTurn::Menu;
+             }
+             if input::is_key_pressed(ctx, Key::Z) || input::is_key_pressed(ctx, Key::Enter) {
+                 state.combat_data.turn = CombatTurn::ResultText;
+                 match state.combat_data.sub_menu_selection {
+                     0 => { // Zemzem
+                         state.combat_data.action_text = "Zemzem içtin.\nCanın 50 arttı!".to_string();
+                         state.player_health = (state.player_health + 50.0).min(100.0);
+                     },
+                     1 => { // Hurma
+                         state.combat_data.action_text = "Hurma yedin.\nCanın 20 arttı!".to_string();
+                         state.player_health = (state.player_health + 20.0).min(100.0);
+                     },
+                     2 => { // Zeytin
+                         state.combat_data.action_text = "Zeytin yedin.\nCanın 10 arttı!".to_string();
+                         state.player_health = (state.player_health + 10.0).min(100.0);
+                     },
+                     3 => { // Ayetel Kürsi
+                         state.combat_data.action_text = "Ayetel Kürsi okudun.\nCanın tamamen doldu!".to_string();
+                         state.player_health = 100.0;
+                     },
+                     _ => {}
+                 }
+             }
+        }
+        CombatTurn::TebligSubMenu => {
+             if input::is_key_pressed(ctx, Key::Up) {
+                 if state.combat_data.sub_menu_selection > 0 {
+                     state.combat_data.sub_menu_selection -= 1;
+                 }
+             }
+             if input::is_key_pressed(ctx, Key::Down) {
+                 if state.combat_data.sub_menu_selection < 1 {
+                     state.combat_data.sub_menu_selection += 1;
+                 }
+             }
+             if input::is_key_pressed(ctx, Key::X) {
+                 state.combat_data.turn = CombatTurn::Menu;
+             }
+             if input::is_key_pressed(ctx, Key::Z) || input::is_key_pressed(ctx, Key::Enter) {
+                 match state.combat_data.sub_menu_selection {
+                     0 => { // Tebliğ Et
+                         state.combat_data.turn = CombatTurn::ResultText;
+                         
+                         // Update stats
+                         if let Some(user) = &mut state.current_user {
+                             user.teblig_count += 1;
+                         }
+                         state.save_users();
+
+                         let acts = [
+                            "Ona İslam'ı anlattın.\nSana güldü.",
+                            "Tövbe etmesini söyledin.\nUmursamadı.",
+                            "Cehennem ateşinden bahsettin.\nOmuz silkti.",
+                            "Ona hidayet diledin.\nHala sırıtıyor.",
+                            "Ona Kuran okudun.\nRahatsız oldu.",
+                            "Ona hadis anlattın.\nKulaklarını tıkadı.",
+                            "Ona ölümü hatırlattın.\nÜrperdi ama belli etmedi.",
+                            "Ona cenneti anlattın.\n'İlgilenmiyorum' dedi.",
+                            "Ona selam verdin.\nAlmadı.",
+                            "Ona dua ettin.\nGözlerini devirdi.",
+                            "Ona zemzem ikram ettin.\n'Kola yok mu?' dedi.",
+                            "Ona misvak uzattın.\n'Diş fırçam var' dedi.",
+                            "Ona takke takmaya çalıştın.\nKafasını çekti.",
+                            "Ona tesbih hediye ettin.\nBoncuk sandı.",
+                            "Ona Cuma mesajı attın.\nEngelledi.",
+                            "Ona ilahi dinlettin.\nKulaklığını taktı.",
+                            "Ona hurma verdin.\nÇekirdeğini sana attı.",
+                            "Ona gül suyu sıktın.\n'Alerjim var' dedi.",
+                            "Ona seccade serdin.\nÜstüne bastı.",
+                            "Ona ezan okudun.\n'Sesin kötü' dedi."
+                        ];
+                        let mut rng = rand::thread_rng();
+                        state.combat_data.action_text = acts[rng.gen_range(0..acts.len())].to_string();
+                     },
+                     1 => { // Kaç
+                         state.scene = Scene::Desktop;
+                         state.player_pos.x = 700.0;
+                     },
+                     _ => {}
+                 }
+             }
         }
         CombatTurn::Fighting => {
             if state.combat_data.attack_bar_active {
@@ -71,6 +258,7 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
                      state.combat_data.attack_bar_active = false;
                      state.combat_data.action_text = "MISS".to_string();
                      state.combat_data.timer = 0.0;
+                     state.combat_data.turn = CombatTurn::ResultText;
                  } else if input::is_key_pressed(ctx, Key::Z) || input::is_key_pressed(ctx, Key::Enter) {
                      state.combat_data.attack_bar_active = false;
                      let dist = (state.combat_data.attack_bar_pos - 400.0).abs();
@@ -83,42 +271,35 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
                      };
                      
                      if damage > 0 {
-                         state.combat_data.action_text = format!("{} DMG", damage);
+                         state.combat_data.action_text = format!("CİHAD! {} HASAR", damage);
+                         
+                         // Update stats
+                         if let Some(user) = &mut state.current_user {
+                             user.cihad_count += 1;
+                         }
+                         state.save_users();
+
                          state.combat_data.sans_shake = 10.0;
+                         state.combat_data.sans_hp -= damage;
+                         if state.combat_data.sans_hp <= 0 {
+                             state.combat_data.sans_hp = 0;
+                             state.combat_data.dialogue_text = "welp... i'm going to grillby's.".to_string();
+                             state.combat_data.turn = CombatTurn::ResultText; // Or a win state
+                         }
                      } else {
                          state.combat_data.action_text = "MISS".to_string();
                      }
                      state.combat_data.timer = 0.0;
+                     state.combat_data.turn = CombatTurn::ResultText;
                  }
-            } else {
-                // Show result
-                if input::is_key_pressed(ctx, Key::Z) || input::is_key_pressed(ctx, Key::Enter) {
-                    state.combat_data.turn = CombatTurn::SansTurn;
-                    state.combat_data.timer = 0.0;
-                    
-                    let jokes = [
-                        "heh heh heh...",
-                        "you're gonna have a bad time.",
-                        "it's a beautiful day outside.",
-                        "birds are singing, flowers are blooming...",
-                        "on days like these, kids like you...",
-                        "should be burning in hell.",
-                        "take it easy, kid.",
-                        "don't you have anything better to do?",
-                        "i'm rooting for ya, kid.",
-                        "geeeeeet dunked on!"
-                    ];
-                    let mut rng = rand::thread_rng();
-                    state.combat_data.dialogue_text = jokes[rng.gen_range(0..jokes.len())].to_string();
-                }
             }
         }
-        CombatTurn::Acting | CombatTurn::Mercy => {
+        CombatTurn::ResultText => {
             if input::is_key_pressed(ctx, Key::Z) || input::is_key_pressed(ctx, Key::Enter) || input::is_key_pressed(ctx, Key::F) {
-                if let CombatTurn::Mercy = state.combat_data.turn {
-                    // End combat on mercy for now
-                    state.scene = Scene::Desktop;
-                    state.player_pos.x = 700.0; // Move player away so they don't re-trigger immediately
+                if state.combat_data.sans_hp <= 0 {
+                     // Victory transition
+                     state.scene = Scene::Desktop;
+                     state.player_pos.x = 700.0;
                 } else {
                     state.combat_data.turn = CombatTurn::SansTurn;
                     state.combat_data.timer = 0.0;
@@ -146,53 +327,61 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
                 state.combat_data.heart_velocity = Vec2::zero();
                 state.combat_data.bones.clear();
                 
-                // Randomize Attack Mode (Blue or Red)
+                // Randomize Attack Mode (0: Gravity, 1: Free Flight)
                 let mut rng = rand::thread_rng();
-                state.combat_data.is_blue_mode = rng.gen_bool(0.5);
+                state.combat_data.mode = rng.gen_range(0..2);
             }
             state.combat_data.timer += 1.0;
 
-            // Physics & Movement (Universal Gravity for both modes)
+            // Physics & Movement
             let speed = 4.0;
             
-            // Gravity (Stronger)
-            state.combat_data.heart_velocity.y += 0.9; 
-            
-            // Jump (Snappier)
-            if input::is_key_pressed(ctx, Key::Up) && state.combat_data.can_jump {
-                state.combat_data.heart_velocity.y = -13.0;
-                state.combat_data.can_jump = false;
-            }
-            
-            // Fast Fall
-            if input::is_key_down(ctx, Key::Down) && !state.combat_data.can_jump {
-                state.combat_data.heart_velocity.y += 1.5;
+            if state.combat_data.mode == 0 {
+                // Gravity Mode
+                state.combat_data.heart_velocity.y += 0.9; 
+                
+                // Jump (Snappier)
+                if input::is_key_pressed(ctx, Key::Up) && state.combat_data.can_jump {
+                    state.combat_data.heart_velocity.y = -13.0;
+                    state.combat_data.can_jump = false;
+                }
+                
+                // Fast Fall
+                if input::is_key_down(ctx, Key::Down) && !state.combat_data.can_jump {
+                    state.combat_data.heart_velocity.y += 1.5;
+                }
+
+                // Horizontal movement
+                if input::is_key_down(ctx, Key::Left) { state.combat_data.heart_pos.x -= speed; }
+                if input::is_key_down(ctx, Key::Right) { state.combat_data.heart_pos.x += speed; }
+                
+                // Apply velocity
+                state.combat_data.heart_pos += state.combat_data.heart_velocity;
+
+                // Floor collision (Box bottom is ~470)
+                if state.combat_data.heart_pos.y > 440.0 {
+                    state.combat_data.heart_pos.y = 440.0;
+                    state.combat_data.heart_velocity.y = 0.0;
+                    state.combat_data.can_jump = true;
+                }
+            } else {
+                // Free Flight Mode
+                if input::is_key_down(ctx, Key::Left) { state.combat_data.heart_pos.x -= speed; }
+                if input::is_key_down(ctx, Key::Right) { state.combat_data.heart_pos.x += speed; }
+                if input::is_key_down(ctx, Key::Up) { state.combat_data.heart_pos.y -= speed; }
+                if input::is_key_down(ctx, Key::Down) { state.combat_data.heart_pos.y += speed; }
             }
 
-            // Horizontal movement
-            if input::is_key_down(ctx, Key::Left) { state.combat_data.heart_pos.x -= speed; }
-            if input::is_key_down(ctx, Key::Right) { state.combat_data.heart_pos.x += speed; }
-            
-            // Apply velocity
-            state.combat_data.heart_pos += state.combat_data.heart_velocity;
-
-            // Floor collision (Box bottom is ~470)
-            if state.combat_data.heart_pos.y > 440.0 {
-                state.combat_data.heart_pos.y = 440.0;
-                state.combat_data.heart_velocity.y = 0.0;
-                state.combat_data.can_jump = true;
-            }
-
-            // Clamp Heart to Box
-            state.combat_data.heart_pos.x = state.combat_data.heart_pos.x.clamp(55.0, 735.0);
-            state.combat_data.heart_pos.y = state.combat_data.heart_pos.y.clamp(325.0, 455.0);
+            // Clamp Heart to Box (Tighter bounds)
+            state.combat_data.heart_pos.x = state.combat_data.heart_pos.x.clamp(60.0, 730.0);
+            state.combat_data.heart_pos.y = state.combat_data.heart_pos.y.clamp(330.0, 460.0);
 
             // Spawn Bones (Complex Pattern)
             if state.combat_data.timer % 40.0 == 0.0 {
                 let mut rng = rand::thread_rng();
                 
-                if state.combat_data.is_blue_mode {
-                    // Blue Mode Patterns (Jump/Duck)
+                if state.combat_data.mode == 0 {
+                    // Gravity Mode Patterns (Jump/Duck)
                     let pattern = rng.gen_range(0..3);
                     match pattern {
                         0 => { // Right to Left (Low)
@@ -202,10 +391,10 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
                                 velocity: Vec2::new(-6.0, 0.0),
                             });
                         },
-                        1 => { // Left to Right (High)
+                        1 => { // Left to Right (High) - Touching Top
                             state.combat_data.bones.push(Bone {
-                                pos: Vec2::new(-50.0, 350.0),
-                                size: Vec2::new(20.0, 60.0),
+                                pos: Vec2::new(-50.0, 320.0),
+                                size: Vec2::new(20.0, 90.0),
                                 velocity: Vec2::new(6.0, 0.0),
                             });
                         },
@@ -224,24 +413,59 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
                         _ => {}
                     }
                 } else {
-                    // Red Mode Patterns (Dodge Gaps)
-                    // Bones come from right, full height but with a gap
-                    let gap_y = rng.gen_range(330.0..440.0);
-                    let gap_size = 60.0;
+                    // Omni-directional Mode (Updated)
+                    // 0: Left, 1: Right, 2: Top, 3: Bottom, 4: Top-Left, 5: Bottom-Left
+                    let direction = rng.gen_range(0..6);
                     
-                    // Top part
-                    state.combat_data.bones.push(Bone {
-                        pos: Vec2::new(800.0, 320.0),
-                        size: Vec2::new(20.0, gap_y - 320.0),
-                        velocity: Vec2::new(-5.0, 0.0),
-                    });
-                    
-                    // Bottom part
-                    state.combat_data.bones.push(Bone {
-                        pos: Vec2::new(800.0, gap_y + gap_size),
-                        size: Vec2::new(20.0, 470.0 - (gap_y + gap_size)),
-                        velocity: Vec2::new(-5.0, 0.0),
-                    });
+                    match direction {
+                        0 => { // Left -> Right
+                            let y_pos = rng.gen_range(330.0..440.0);
+                            state.combat_data.bones.push(Bone {
+                                pos: Vec2::new(-50.0, y_pos),
+                                size: Vec2::new(100.0, 10.0), // Thinner, longer
+                                velocity: Vec2::new(7.0, 0.0),
+                            });
+                        },
+                        1 => { // Right -> Left
+                            let y_pos = rng.gen_range(330.0..440.0);
+                            state.combat_data.bones.push(Bone {
+                                pos: Vec2::new(800.0, y_pos),
+                                size: Vec2::new(100.0, 10.0),
+                                velocity: Vec2::new(-7.0, 0.0),
+                            });
+                        },
+                        2 => { // Top -> Bottom
+                            let x_pos = rng.gen_range(60.0..730.0);
+                            state.combat_data.bones.push(Bone {
+                                pos: Vec2::new(x_pos, 250.0), // Above box
+                                size: Vec2::new(10.0, 100.0), // Vertical
+                                velocity: Vec2::new(0.0, 5.0),
+                            });
+                        },
+                        3 => { // Bottom -> Top
+                            let x_pos = rng.gen_range(60.0..730.0);
+                            state.combat_data.bones.push(Bone {
+                                pos: Vec2::new(x_pos, 500.0), // Below box
+                                size: Vec2::new(10.0, 100.0),
+                                velocity: Vec2::new(0.0, -5.0),
+                            });
+                        },
+                        4 => { // Top-Left -> Diagonal Down-Right
+                            state.combat_data.bones.push(Bone {
+                                pos: Vec2::new(0.0, 250.0),
+                                size: Vec2::new(15.0, 60.0), 
+                                velocity: Vec2::new(4.0, 4.0),
+                            });
+                        },
+                        5 => { // Bottom-Left -> Diagonal Up-Right
+                            state.combat_data.bones.push(Bone {
+                                pos: Vec2::new(0.0, 500.0),
+                                size: Vec2::new(15.0, 60.0),
+                                velocity: Vec2::new(4.0, -4.0),
+                            });
+                        },
+                        _ => {}
+                    }
                 }
             }
 
@@ -268,7 +492,7 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
                 }
 
                 // Remove if out of bounds
-                if bones[i].pos.x < -50.0 || bones[i].pos.x > 850.0 {
+                if bones[i].pos.x < -50.0 || bones[i].pos.x > 850.0 || bones[i].pos.y < 200.0 || bones[i].pos.y > 600.0 {
                     bones.remove(i);
                 } else {
                     i += 1;
@@ -281,14 +505,15 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
 
             if state.player_health <= 0.0 {
                 state.player_health = 0.0;
-                // Game Over logic could go here
+                state.scene = crate::defs::Scene::KernelPanic;
+                state.generate_kernel_panic();
             }
 
             if state.combat_data.timer > 400.0 { // Survival time
                 state.combat_data.turn = CombatTurn::Menu;
                 state.combat_data.dialogue_text = "You feel your sins crawling on your back.".to_string();
                 state.combat_data.bones.clear();
-                state.combat_data.is_blue_mode = false; // Reset to red for menu
+                state.combat_data.mode = 0; // Reset to default
             }
         }
     }
@@ -334,33 +559,162 @@ pub fn draw(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
             let mut t = Text::new(&state.combat_data.dialogue_text, state.font.clone());
             t.draw(ctx, DrawParams::new().position(text_pos).color(Color::WHITE));
         }
+        CombatTurn::TekfirSubMenu => {
+            let options = ["* Müşrik", "* Fasık", "* Münafık", "* Kafir", "* Zındık", "* Tağut", "* Deccal", "* Ebu Cehil", "* Yecüc"];
+            for (i, opt) in options.iter().enumerate() {
+                let col = i / 3;
+                let row = i % 3;
+                
+                let x = 100.0 + col as f32 * 220.0;
+                let y = 340.0 + row as f32 * 30.0;
+
+                let mut t = Text::new(*opt, state.font.clone());
+                t.draw(ctx, DrawParams::new().position(Vec2::new(x, y)).color(Color::WHITE));
+                
+                if state.combat_data.sub_menu_selection == i {
+                    if let Some(heart_tex) = &state.heart_texture {
+                        heart_tex.draw(ctx, DrawParams::new()
+                            .position(Vec2::new(x - 30.0, y + 5.0))
+                            .scale(Vec2::new(0.08, 0.08))
+                            .color(Color::RED)
+                        );
+                    } else {
+                        let heart_rect = Rectangle::new(x - 30.0, y + 5.0, 10.0, 10.0);
+                        let heart_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, heart_rect).unwrap();
+                        heart_mesh.draw(ctx, DrawParams::new().color(Color::RED));
+                    }
+                }
+            }
+        }
+        CombatTurn::ItemSubMenu => {
+            let options = ["* Zemzem", "* Hurma", "* Zeytin", "* Ayetel Kürsi"];
+            for (i, opt) in options.iter().enumerate() {
+                let mut t = Text::new(*opt, state.font.clone());
+                t.draw(ctx, DrawParams::new().position(Vec2::new(100.0, 340.0 + i as f32 * 30.0)).color(Color::WHITE));
+                
+                if state.combat_data.sub_menu_selection == i {
+                    if let Some(heart_tex) = &state.heart_texture {
+                        heart_tex.draw(ctx, DrawParams::new()
+                            .position(Vec2::new(70.0, 345.0 + i as f32 * 30.0))
+                            .scale(Vec2::new(0.08, 0.08))
+                            .color(Color::RED)
+                        );
+                    } else {
+                        let heart_rect = Rectangle::new(70.0, 345.0 + i as f32 * 30.0, 10.0, 10.0);
+                        let heart_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, heart_rect).unwrap();
+                        heart_mesh.draw(ctx, DrawParams::new().color(Color::RED));
+                    }
+                }
+            }
+        }
+        CombatTurn::TebligSubMenu => {
+            let options = ["* Tebliğ Et", "* Kaç"];
+            for (i, opt) in options.iter().enumerate() {
+                let mut t = Text::new(*opt, state.font.clone());
+                t.draw(ctx, DrawParams::new().position(Vec2::new(100.0, 340.0 + i as f32 * 30.0)).color(Color::WHITE));
+                
+                if state.combat_data.sub_menu_selection == i {
+                    if let Some(heart_tex) = &state.heart_texture {
+                        heart_tex.draw(ctx, DrawParams::new()
+                            .position(Vec2::new(70.0, 345.0 + i as f32 * 30.0))
+                            .scale(Vec2::new(0.08, 0.08))
+                            .color(Color::RED)
+                        );
+                    } else {
+                        let heart_rect = Rectangle::new(70.0, 345.0 + i as f32 * 30.0, 10.0, 10.0);
+                        let heart_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, heart_rect).unwrap();
+                        heart_mesh.draw(ctx, DrawParams::new().color(Color::RED));
+                    }
+                }
+            }
+        }
         CombatTurn::Fighting => {
             if state.combat_data.attack_bar_active {
-                // Draw target area
-                let target_rect = Rectangle::new(380.0, 320.0, 40.0, 150.0);
-                let target_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, target_rect)?;
-                target_mesh.draw(ctx, DrawParams::new().color(Color::rgb(0.5, 0.5, 0.5)));
+                // Draw Background Track
+                let _track_rect = Rectangle::new(50.0, 320.0, 700.0, 150.0);
+                // No fill, just the box is already there.
+                
+                // Draw "Eye" Shape Target Area
+                // We simulate an eye shape with a few concentric rectangles or ellipses if possible.
+                // Let's use a series of fading rectangles to create a "glow" center.
+                
+                let center_x = 400.0;
+                let center_y = 395.0;
+                
+                // Outer glow
+                let glow_width = 120.0;
+                let glow_height = 130.0;
+                let glow_rect = Rectangle::new(center_x - glow_width/2.0, center_y - glow_height/2.0, glow_width, glow_height);
+                let glow_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, glow_rect).unwrap();
+                glow_mesh.draw(ctx, DrawParams::new().color(Color::rgba(0.5, 0.5, 0.5, 0.3)));
 
-                // Draw moving bar
-                let bar_rect = Rectangle::new(state.combat_data.attack_bar_pos, 320.0, 10.0, 150.0);
-                let bar_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, bar_rect)?;
-                bar_mesh.draw(ctx, DrawParams::new().color(Color::WHITE));
+                // Inner Target
+                let target_width = 40.0;
+                let target_height = 130.0;
+                let target_rect = Rectangle::new(center_x - target_width/2.0, center_y - target_height/2.0, target_width, target_height);
+                let target_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, target_rect).unwrap();
+                
+                // Pulse effect for target color
+                let pulse = (state.combat_data.timer * 0.1).sin().abs();
+                let target_color = Color::rgb(0.2 + 0.3 * pulse, 0.2 + 0.3 * pulse, 0.2 + 0.3 * pulse);
+                target_mesh.draw(ctx, DrawParams::new().color(target_color));
+                
+                // Center "Perfect" line (Double line)
+                let line_h = 140.0;
+                let c_line1 = Mesh::rectangle(ctx, ShapeStyle::Fill, Rectangle::new(center_x - 2.0, center_y - line_h/2.0, 4.0, line_h)).unwrap();
+                c_line1.draw(ctx, DrawParams::new().color(Color::WHITE));
+                
+                // Moving Bar
+                let bar_x = state.combat_data.attack_bar_pos;
+                let bar_w = 14.0;
+                let bar_h = 140.0;
+                
+                // Draw "Ghost" trails for speed effect
+                for i in 1..4 {
+                    let offset = i as f32 * 15.0;
+                    if bar_x - offset > 50.0 {
+                        let trail_rect = Rectangle::new(bar_x - offset, center_y - bar_h/2.0, bar_w, bar_h);
+                        let trail_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, trail_rect).unwrap();
+                        trail_mesh.draw(ctx, DrawParams::new().color(Color::rgba(1.0, 1.0, 1.0, 0.3 - (i as f32 * 0.08))));
+                    }
+                }
+
+                // Main Bar (Inverted colors or flashing)
+                let bar_rect = Rectangle::new(bar_x, center_y - bar_h/2.0, bar_w, bar_h);
+                let bar_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, bar_rect).unwrap();
+                
+                // Rainbow effect if close to center
+                let dist = (bar_x - center_x).abs();
+                let bar_color = if dist < 20.0 {
+                    let _hue = (state.combat_data.timer * 5.0) % 360.0;
+                    // Simple RGB approximation for rainbow not worth importing a lib, just flash Cyan/White
+                    if (state.combat_data.timer as i32 / 4) % 2 == 0 { Color::rgb(0.0, 1.0, 1.0) } else { Color::WHITE }
+                } else {
+                    Color::WHITE
+                };
+                
+                bar_mesh.draw(ctx, DrawParams::new().color(bar_color));
+                
+                // Outline
+                let bar_outline = Mesh::rectangle(ctx, ShapeStyle::Stroke(3.0), bar_rect).unwrap();
+                bar_outline.draw(ctx, DrawParams::new().color(Color::BLACK));
+
             } else {
                 let mut t = Text::new(&state.combat_data.action_text, state.font.clone());
                 t.draw(ctx, DrawParams::new().position(text_pos).color(Color::WHITE));
             }
         }
-        CombatTurn::Acting | CombatTurn::Mercy => {
+        CombatTurn::ResultText => {
             let mut t = Text::new(&state.combat_data.action_text, state.font.clone());
             t.draw(ctx, DrawParams::new().position(text_pos).color(Color::WHITE));
         }
         CombatTurn::SansTurn => {
              // Draw Dialogue Bubble
              let bubble_rect = Rectangle::new(450.0, 100.0, 200.0, 80.0);
-             let bubble_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, bubble_rect)?;
+             let bubble_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, bubble_rect).unwrap();
              bubble_mesh.draw(ctx, DrawParams::new().color(Color::WHITE));
              
-             let bubble_border = Mesh::rectangle(ctx, ShapeStyle::Stroke(2.0), bubble_rect)?;
+             let bubble_border = Mesh::rectangle(ctx, ShapeStyle::Stroke(2.0), bubble_rect).unwrap();
              bubble_border.draw(ctx, DrawParams::new().color(Color::BLACK));
  
              let mut t = Text::new("You're gonna\nhave a bad time.", state.font.clone());
@@ -379,7 +733,7 @@ pub fn draw(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
              } else {
                  // Fallback
                  let heart_rect = Rectangle::new(state.combat_data.heart_pos.x, state.combat_data.heart_pos.y, 10.0, 10.0);
-                 let heart_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, heart_rect)?;
+                 let heart_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, heart_rect).unwrap();
                  heart_mesh.draw(ctx, DrawParams::new().color(Color::RED));
              }
 
@@ -398,7 +752,7 @@ pub fn draw(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
                      );
                  } else {
                      let bone_rect = Rectangle::new(bone.pos.x, bone.pos.y, bone.size.x, bone.size.y);
-                     let bone_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, bone_rect)?;
+                     let bone_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, bone_rect).unwrap();
                      bone_mesh.draw(ctx, DrawParams::new().color(Color::WHITE));
                  }
              }
@@ -408,7 +762,7 @@ pub fn draw(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
     }
 
     // Draw Buttons (Fight, Act, Item, Mercy)
-    let buttons = ["FIGHT", "ACT", "ITEM", "MERCY"];
+    let buttons = ["CİHAD", "TEKFİR", "ITEM", "TEBLİĞ"];
     for (i, btn) in buttons.iter().enumerate() {
         let x = 100.0 + i as f32 * 160.0;
         let y = 500.0;
@@ -425,16 +779,35 @@ pub fn draw(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
         if state.combat_data.turn == CombatTurn::Menu && state.combat_data.menu_selection == i {
              if let Some(heart_tex) = &state.heart_texture {
                  heart_tex.draw(ctx, DrawParams::new()
-                    .position(Vec2::new(x - 20.0, y + 5.0))
-                    .scale(Vec2::new(0.1, 0.1))
+                    .position(Vec2::new(x - 25.0, y + 2.0))
+                    .scale(Vec2::new(0.08, 0.08))
                     .color(Color::RED)
                  );
              } else {
                  let heart_rect = Rectangle::new(x - 20.0, y + 5.0, 10.0, 10.0);
-                 let heart_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, heart_rect)?;
+                 let heart_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, heart_rect).unwrap();
                  heart_mesh.draw(ctx, DrawParams::new().color(Color::RED));
              }
         }
+    }
+
+    // Draw Sans Health (Top Left)
+    // HP Text
+    let mut sans_hp_label = Text::new("SANS HP", state.font.clone());
+    sans_hp_label.draw(ctx, DrawParams::new().position(Vec2::new(20.0, 20.0)).color(Color::WHITE));
+
+    // HP Bar Background (Dark Gray)
+    let sans_max_bar_width = 200.0; 
+    let sans_bar_bg_rect = Rectangle::new(120.0, 25.0, sans_max_bar_width, 20.0);
+    let sans_bar_bg_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, sans_bar_bg_rect)?;
+    sans_bar_bg_mesh.draw(ctx, DrawParams::new().color(Color::rgb(0.2, 0.2, 0.2)));
+
+    // HP Bar Foreground (Blue)
+    let sans_current_bar_width = (state.combat_data.sans_hp as f32 / state.combat_data.sans_max_hp as f32) * sans_max_bar_width;
+    if sans_current_bar_width > 0.0 {
+        let sans_bar_fg_rect = Rectangle::new(120.0, 25.0, sans_current_bar_width, 20.0);
+        let sans_bar_fg_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, sans_bar_fg_rect)?;
+        sans_bar_fg_mesh.draw(ctx, DrawParams::new().color(Color::rgb(0.0, 0.5, 1.0))); // Blue
     }
 
     // Draw Player Health (Native Bar Style - Top Right)

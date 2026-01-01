@@ -4,8 +4,10 @@ use tetra::math::Vec2;
 pub enum CombatTurn {
     Menu,
     Fighting,
-    Acting,
-    Mercy,
+    TekfirSubMenu,
+    TebligSubMenu,
+    ItemSubMenu,
+    ResultText,
     SansTurn,
 }
 
@@ -33,7 +35,7 @@ pub struct CombatData {
     pub attack_bar_active: bool,
     pub heart_pos: Vec2<f32>,
     pub heart_velocity: Vec2<f32>,
-    pub is_blue_mode: bool,
+    pub mode: u8, // 0: Gravity, 1: Free Flight
     pub can_jump: bool,
     pub bones: Vec<Bone>,
 }
@@ -41,8 +43,8 @@ pub struct CombatData {
 impl CombatData {
     pub fn new() -> Self {
         CombatData {
-            sans_hp: 1,
-            sans_max_hp: 1,
+            sans_hp: 500,
+            sans_max_hp: 500,
             turn: CombatTurn::Menu,
             menu_selection: 0,
             sub_menu_selection: 0,
@@ -55,7 +57,7 @@ impl CombatData {
             attack_bar_active: false,
             heart_pos: Vec2::new(400.0, 400.0),
             heart_velocity: Vec2::zero(),
-            is_blue_mode: false,
+            mode: 0,
             can_jump: true,
             bones: Vec::new(),
         }

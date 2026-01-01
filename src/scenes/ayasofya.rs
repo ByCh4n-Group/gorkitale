@@ -34,6 +34,7 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
         state.current_stage = 3;
         state.player_pos.x = 400.0; // Center of stage 3 (entrance)
         state.player_pos.y = 400.0; // Below the door
+        state.mosque_outfit = 0;
     }
 
     // Exit Logic (Right side)
@@ -42,6 +43,7 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
         state.current_stage = 3;
         state.player_pos.x = 400.0; // Center of stage 3 (entrance)
         state.player_pos.y = 400.0; // Below the door
+        state.mosque_outfit = 0;
     }
 
     // Ensure music is off
@@ -72,7 +74,13 @@ pub fn draw(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
     }
 
     // Draw Player
-    if let Some(texture) = &state.player_texture_front {
+    let player_texture = match state.mosque_outfit {
+        1 => &state.player_texture_fes,
+        2 => &state.player_texture_takke,
+        _ => &state.player_texture_front,
+    };
+
+    if let Some(texture) = player_texture {
         let width = texture.width() as f32;
         let height = texture.height() as f32;
         let origin = Vec2::new(width / 2.0, height / 2.0);
@@ -80,7 +88,7 @@ pub fn draw(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
         texture.draw(ctx, DrawParams::new()
             .position(state.player_pos)
             .origin(origin)
-            .scale(Vec2::new(3.0, 3.0))
+            .scale(Vec2::new(4.0, 4.0))
         );
     }
 

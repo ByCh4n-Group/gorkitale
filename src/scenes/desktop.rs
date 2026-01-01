@@ -223,6 +223,10 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
              if input::is_key_pressed(ctx, Key::F) {
                  state.scene = Scene::AyasofyaInside;
                  state.player_pos = Vec2::new(100.0, 300.0); // Entrance inside
+                 
+                 // Randomly select outfit
+                 let mut rng = rand::thread_rng();
+                 state.mosque_outfit = rng.gen_range(1..3); // 1 or 2
              }
         }
     }

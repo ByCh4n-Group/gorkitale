@@ -32,6 +32,8 @@ pub const ASSET_LIST: &[AssetDefinition] = &[
     AssetDefinition { name: "Ayasofya Entrance", path: "./assets/ayasofya_giris.jpg", asset_type: AssetType::Texture },
     AssetDefinition { name: "Ayasofya Interior", path: "./assets/ayasofya_ici.jpg", asset_type: AssetType::Texture },
     AssetDefinition { name: "Bone", path: "./assets/bone.png", asset_type: AssetType::Texture },
+    AssetDefinition { name: "Player Fes", path: "./assets/chara_fes.png", asset_type: AssetType::Texture },
+    AssetDefinition { name: "Player Takke", path: "./assets/chara_mavi_takke.png", asset_type: AssetType::Texture },
 ];
 
 pub enum LoadedAsset {
