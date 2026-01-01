@@ -2,10 +2,16 @@
 
 A retro-style Linux operating system simulation and game built with Rust and Tetra.
 
-<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/c0ac4d5b-6e44-4cf3-83a3-ed259c8ec5e9" />
-<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/d57034f1-ad5b-4142-bc7b-d8620492570c" />
-<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/91c3a2c2-5af5-4ee0-ac03-952339a1b446" />
-<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/b699a9d1-22dc-4f56-a50e-ea50e4be47af" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/e5f8997f-7297-4ace-84d7-21c4eee3f7ef" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/b272ffd5-6580-478e-885d-b77ba425c696" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/d5d825dd-4db6-4f59-9aa2-29b7f6100f45" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/8774a62a-4fd1-4cde-b05e-42cdb7f801bc" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/9d07eab0-d351-4aa4-99bb-d2eac5e0701d" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/acaa32e1-abc6-4cd8-a72d-fb8ac997feb7" />
+
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/c199c901-a246-4b2e-a996-281e2107e0fd" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/28590cd6-f869-437f-9d3d-8eade34afe78" />
+
 
 ## Overview
 
