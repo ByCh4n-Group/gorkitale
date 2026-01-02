@@ -4,22 +4,18 @@ pub const SCREEN_HEIGHT: i32 = 600;
 #[derive(PartialEq, Clone, Copy)]
 pub enum Scene {
     Boot,
-    LoginUsername,
-    LoginPassword,
     Menu,
     TransitionToDesktop,
     Desktop,
     CombatTransition,
     Combat,
-    Config,
     KernelPanic,
     AyasofyaInside,
 }
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum Language {
     English,
-    Turkish,
 }
 
 #[derive(PartialEq, Clone, Copy)]

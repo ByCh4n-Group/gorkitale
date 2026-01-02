@@ -1,0 +1,76 @@
+name: CD
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev libasound2-dev
+      - name: Build Release
+        run: make release-linux
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-release
+          path: releases/*.tar.gz
+
+  build-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64 zip
+      - name: Install Rust target
+        run: rustup target add x86_64-pc-windows-gnu
+      - name: Setup SDL2
+        run: |
+          wget https://github.com/libsdl-org/SDL/releases/download/release-2.28.5/SDL2-devel-2.28.5-mingw.tar.gz
+          tar xzf SDL2-devel-2.28.5-mingw.tar.gz
+          echo "SDL2_DIR=$(pwd)/SDL2-2.28.5/x86_64-w64-mingw32" >> $GITHUB_ENV
+      - name: Build Release
+        run: |
+          export LIBRARY_PATH="$SDL2_DIR/lib:$LIBRARY_PATH"
+          export RUSTFLAGS="-L native=$SDL2_DIR/lib"
+          export SDL2_NO_PKG_CONFIG=1
+          make release-windows
+          
+          # Bundle SDL2.dll
+          cp $SDL2_DIR/bin/SDL2.dll releases/windows/takfirtale/
+          
+          # Update the zip file to include SDL2.dll
+          cd releases/windows
+          zip -u ../takfirtale-windows-*.zip takfirtale/SDL2.dll
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: releases/*.zip
+
+  release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/linux-release/*.tar.gz
+            artifacts/windows-release/*.zip

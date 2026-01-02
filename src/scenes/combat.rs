@@ -70,10 +70,10 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
                  state.combat_data.turn = CombatTurn::ResultText;
                  
                  // Update stats
-                 if let Some(user) = &mut state.current_user {
+                 if let Some(user) = &mut state.system.current_user {
                      user.tekfir_count += 1;
                  }
-                 state.save_users();
+                 state.system.save_users();
 
                  let mut rng = rand::thread_rng();
                  match state.combat_data.sub_menu_selection {
@@ -172,19 +172,19 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
                  match state.combat_data.sub_menu_selection {
                      0 => { // Zemzem
                          state.combat_data.action_text = "Zemzem içtin.\nCanın 50 arttı!".to_string();
-                         state.player_health = (state.player_health + 50.0).min(100.0);
+                         state.player.health = (state.player.health + 50.0).min(100.0);
                      },
                      1 => { // Hurma
                          state.combat_data.action_text = "Hurma yedin.\nCanın 20 arttı!".to_string();
-                         state.player_health = (state.player_health + 20.0).min(100.0);
+                         state.player.health = (state.player.health + 20.0).min(100.0);
                      },
                      2 => { // Zeytin
                          state.combat_data.action_text = "Zeytin yedin.\nCanın 10 arttı!".to_string();
-                         state.player_health = (state.player_health + 10.0).min(100.0);
+                         state.player.health = (state.player.health + 10.0).min(100.0);
                      },
                      3 => { // Ayetel Kürsi
                          state.combat_data.action_text = "Ayetel Kürsi okudun.\nCanın tamamen doldu!".to_string();
-                         state.player_health = 100.0;
+                         state.player.health = 100.0;
                      },
                      _ => {}
                  }
@@ -210,10 +210,10 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
                          state.combat_data.turn = CombatTurn::ResultText;
                          
                          // Update stats
-                         if let Some(user) = &mut state.current_user {
+                         if let Some(user) = &mut state.system.current_user {
                              user.teblig_count += 1;
                          }
-                         state.save_users();
+                         state.system.save_users();
 
                          let acts = [
                             "Ona İslam'ı anlattın.\nSana güldü.",
@@ -242,7 +242,7 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
                      },
                      1 => { // Kaç
                          state.scene = Scene::Desktop;
-                         state.player_pos.x = 700.0;
+                         state.player.pos.x = 700.0;
                      },
                      _ => {}
                  }
@@ -274,10 +274,10 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
                          state.combat_data.action_text = format!("CİHAD! {} HASAR", damage);
                          
                          // Update stats
-                         if let Some(user) = &mut state.current_user {
+                         if let Some(user) = &mut state.system.current_user {
                              user.cihad_count += 1;
                          }
-                         state.save_users();
+                         state.system.save_users();
 
                          state.combat_data.sans_shake = 10.0;
                          state.combat_data.sans_hp -= damage;
@@ -299,7 +299,7 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
                 if state.combat_data.sans_hp <= 0 {
                      // Victory transition
                      state.scene = Scene::Desktop;
-                     state.player_pos.x = 700.0;
+                     state.player.pos.x = 700.0;
                 } else {
                     state.combat_data.turn = CombatTurn::SansTurn;
                     state.combat_data.timer = 0.0;
@@ -500,11 +500,11 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
             }
 
             if hit {
-                state.player_health -= 1.0;
+                state.player.health -= 1.0;
             }
 
-            if state.player_health <= 0.0 {
-                state.player_health = 0.0;
+            if state.player.health <= 0.0 {
+                state.player.health = 0.0;
                 state.scene = crate::defs::Scene::KernelPanic;
                 state.generate_kernel_panic();
             }
@@ -535,7 +535,7 @@ pub fn draw(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
         0.0
     };
     
-    if let Some(sans_texture) = &state.sans_combat_texture {
+    if let Some(sans_texture) = &state.world.sans_combat_texture {
         let s_width = sans_texture.width() as f32;
         let s_height = sans_texture.height() as f32;
         let s_origin = Vec2::new(s_width / 2.0, s_height / 2.0);
@@ -822,7 +822,7 @@ pub fn draw(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
     bar_bg_mesh.draw(ctx, DrawParams::new().color(Color::RED));
 
     // HP Bar Foreground (Yellow)
-    let current_bar_width = (state.player_health / 100.0) * max_bar_width;
+    let current_bar_width = (state.player.health / 100.0) * max_bar_width;
     if current_bar_width > 0.0 {
         let bar_fg_rect = Rectangle::new(590.0, 25.0, current_bar_width, 20.0);
         let bar_fg_mesh = Mesh::rectangle(ctx, ShapeStyle::Fill, bar_fg_rect)?;
@@ -830,7 +830,7 @@ pub fn draw(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
     }
 
     // HP Numbers
-    let hp_text = format!("{}/100", state.player_health as i32);
+    let hp_text = format!("{}/100", state.player.health as i32);
     let mut t = Text::new(hp_text, state.font.clone());
     t.draw(ctx, DrawParams::new().position(Vec2::new(700.0, 20.0)).color(Color::WHITE));
 

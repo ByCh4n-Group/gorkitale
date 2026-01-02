@@ -1,4 +1,6 @@
-# Takfir Tale
+# Gorkitale
+
+[![CI](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml)
 
 A retro-style Linux operating system simulation and game built with Rust and Tetra.
 
@@ -19,7 +21,7 @@ TODO:
 
 ## Overview
 
-Welcome to **Takfir Tale 1.0 LTS**. This project simulates the experience of booting up an old-school Linux machine, complete with systemd boot logs and a TTY login screen.
+Welcome to **Gorkitale 1.0 LTS**. This project simulates the experience of booting up an old-school Linux machine, complete with systemd boot logs and a TTY login screen.
 
 Beyond the terminal lies a surreal adventure. Log in, explore the system, and launch into a world where you must interact with mysterious characters and uncover the secrets of the "VibeCoded" kernel.
 

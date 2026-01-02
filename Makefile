@@ -1,4 +1,4 @@
-APP_NAME = takfirtale
+APP_NAME = gorkitale
 VERSION = 1.0.0
 
 .PHONY: all clean release release-linux release-windows
