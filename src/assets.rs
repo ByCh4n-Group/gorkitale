@@ -1,7 +1,3 @@
-use tetra::Context;
-use tetra::audio::Sound;
-use tetra::graphics::Texture;
-
 pub enum AssetType {
     Texture,
     Sound,
@@ -115,20 +111,3 @@ pub const ASSET_LIST: &[AssetDefinition] = &[
         asset_type: AssetType::Texture,
     },
 ];
-
-pub enum LoadedAsset {
-    Texture(Texture),
-    Sound(Sound),
-}
-
-pub fn load_asset_by_index(ctx: &mut Context, index: usize) -> tetra::Result<LoadedAsset> {
-    if index >= ASSET_LIST.len() {
-        panic!("Asset index out of bounds: {}", index);
-    }
-
-    let def = &ASSET_LIST[index];
-    match def.asset_type {
-        AssetType::Texture => Ok(LoadedAsset::Texture(Texture::new(ctx, def.path)?)),
-        AssetType::Sound => Ok(LoadedAsset::Sound(Sound::new(def.path)?)),
-    }
-}

@@ -460,10 +460,16 @@ fn draw_credits(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
     );
 
     let credits = [
-        "Developed by: VibeCoded",
-        "Engine: Tetra (Rust)",
-        "Art: ...",
-        "Music: ...",
+        "Developed by: lazypwny751, Bumbleshot, GitHub Copilot",
+        "Engine:       Tetra (Rust)",
+        "Code:         GitHub Copilot, lazypwny751",
+        "Lore:         Bumbleshot, lazypwny751",
+        "Assets:       Bumbleshot, lazypwny751",
+        "Art:          <you could be a developer of this game>",
+        "Music:        <you could be a developer of this game>",
+        "",
+        "Special Thanks to: The entire Tetra community!",
+        "repository: https://github.com/ByCh4n-Group/gorkitale",
     ];
 
     for (i, line) in credits.iter().enumerate() {

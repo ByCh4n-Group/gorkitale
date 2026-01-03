@@ -129,6 +129,7 @@ fn handle_key_pressed(ctx: &mut Context, state: &mut GameState, key: Key) {
                             Language::Turkish => TextResources::new_turkish(),
                         };
                         state.world.gaster_dialogues = state.texts.gaster_dialogues.clone();
+                        state.system.save_global_settings();
                     }
                     1 => {
                         // Volume
@@ -136,6 +137,7 @@ fn handle_key_pressed(ctx: &mut Context, state: &mut GameState, key: Key) {
                         if let Some(instance) = &mut state.world.music_instance {
                             instance.set_volume(state.system.volume);
                         }
+                        state.system.save_global_settings();
                     }
                     _ => {}
                 }
@@ -158,6 +160,7 @@ fn handle_key_pressed(ctx: &mut Context, state: &mut GameState, key: Key) {
                             Language::Turkish => TextResources::new_turkish(),
                         };
                         state.world.gaster_dialogues = state.texts.gaster_dialogues.clone();
+                        state.system.save_global_settings();
                     }
                     1 => {
                         // Volume
@@ -165,6 +168,7 @@ fn handle_key_pressed(ctx: &mut Context, state: &mut GameState, key: Key) {
                         if let Some(instance) = &mut state.world.music_instance {
                             instance.set_volume(state.system.volume);
                         }
+                        state.system.save_global_settings();
                     }
                     _ => {}
                 }

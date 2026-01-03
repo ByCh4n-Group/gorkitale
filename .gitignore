@@ -1,5 +1,6 @@
 /target
 users.db
+global.db
 
 # LaTeX
 *.aux

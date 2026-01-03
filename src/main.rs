@@ -3,6 +3,7 @@ mod combat;
 mod defs;
 mod discord_rpc;
 mod game_state;
+mod global_db;
 mod input_handler;
 mod physics;
 mod player;

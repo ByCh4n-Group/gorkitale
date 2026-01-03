@@ -1,4 +1,5 @@
 use crate::defs::Language;
+use crate::global_db::GlobalSettings;
 use tetra::Context;
 
 #[derive(Clone, Debug)]
@@ -44,9 +45,17 @@ impl SystemState {
             }
         }
 
+        let global_settings = GlobalSettings::new();
+        let language = if global_settings.language == "tr" {
+            Language::Turkish
+        } else {
+            Language::English
+        };
+        let volume = global_settings.volume as f32 / 100.0;
+
         Ok(Self {
-            language: Language::Turkish, // Default to Turkish
-            volume: 1.0,
+            language,
+            volume,
             users,
             current_user: None,
         })
@@ -80,5 +89,19 @@ impl SystemState {
             self.users.insert(0, user);
             self.save_users();
         }
+    }
+
+    pub fn save_global_settings(&self) {
+        let lang_str = match self.language {
+            Language::English => "en",
+            Language::Turkish => "tr",
+        };
+        let vol_int = (self.volume * 100.0) as u32;
+
+        let settings = GlobalSettings {
+            language: lang_str.to_string(),
+            volume: vol_int,
+        };
+        settings.save();
     }
 }

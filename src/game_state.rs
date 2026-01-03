@@ -1,5 +1,7 @@
 use rand::Rng;
+use std::collections::HashMap;
 use tetra::Event;
+use tetra::audio::Sound;
 use tetra::graphics::mesh::{Mesh, ShapeStyle};
 use tetra::graphics::text::{Font, Text};
 use tetra::graphics::{self, Color, DrawParams, Rectangle, Texture};
@@ -61,6 +63,10 @@ pub struct GameState {
     pub menu_state: crate::scenes::menu::MenuState,
     pub game_over_state: GameOverState,
 
+    // Assets Cache
+    pub texture_cache: HashMap<String, Texture>,
+    pub sound_cache: HashMap<String, Sound>,
+
     // Transition
     pub transition_timer: f32,
     pub session_started: bool,
@@ -102,11 +108,7 @@ impl GameState {
             ),
         };
 
-        let mut boot_state = crate::scenes::boot::BootState::new();
-        boot_state
-            .boot_lines
-            .push("Starting VibeCoded Linux version 6.9.420...".to_string());
-        boot_state.boot_text_cache.push(None);
+        let boot_state = crate::scenes::boot::BootState::new();
 
         let mut world = WorldState::new();
         let system = SystemState::new(ctx)?;
@@ -144,6 +146,9 @@ impl GameState {
             menu_state,
             game_over_state: GameOverState::new(),
 
+            texture_cache: HashMap::new(),
+            sound_cache: HashMap::new(),
+
             transition_timer: 0.0,
             session_started: false,
 
@@ -155,58 +160,34 @@ impl GameState {
         })
     }
 
-    pub fn assign_asset(&mut self, index: usize, asset: crate::assets::LoadedAsset) {
-        use crate::assets::LoadedAsset;
-        match (index, asset) {
-            (0, LoadedAsset::Texture(t)) => self.player.texture_front = Some(t),
-            (1, LoadedAsset::Texture(t)) => self.player.texture_left = Some(t),
-            (2, LoadedAsset::Texture(t)) => self.player.texture_right = Some(t),
-            (3, LoadedAsset::Texture(t)) => self.world.bg_texture = Some(t),
-            (4, LoadedAsset::Texture(t)) => self.world.npc_gaster_standing = Some(t),
-            (5, LoadedAsset::Texture(t)) => self.world.npc_gaster_talking = Some(t),
-            (6, LoadedAsset::Texture(t)) => self.world.rarity_texture = Some(t),
-            (7, LoadedAsset::Texture(t)) => self.world.eilish_texture = Some(t),
-            (8, LoadedAsset::Texture(t)) => self.world.sans_texture = Some(t),
-            (9, LoadedAsset::Texture(t)) => self.world.sans_combat_texture = Some(t),
-            (10, LoadedAsset::Texture(t)) => self.world.sans_shrug_texture = Some(t),
-            (11, LoadedAsset::Texture(t)) => self.world.sans_handshake_texture = Some(t),
-            (12, LoadedAsset::Texture(t)) => self.heart_texture = Some(t),
-            (13, LoadedAsset::Texture(t)) => self.world.musicbox_texture = Some(t),
-            (14, LoadedAsset::Sound(s)) => self.world.music_track = Some(s),
-            (15, LoadedAsset::Texture(t)) => self.world.ayasofya_giris_texture = Some(t),
-            (16, LoadedAsset::Texture(t)) => self.world.ayasofya_ici_texture = Some(t),
-            (17, LoadedAsset::Texture(t)) => self.bone_texture = Some(t),
-            (18, LoadedAsset::Texture(t)) => self.player.texture_fes = Some(t),
-            (19, LoadedAsset::Texture(t)) => self.player.texture_takke = Some(t),
-            _ => {
-                println!("Warning: Asset index {} mismatch or unhandled", index);
-            }
+    pub fn assign_texture(&mut self, name: &str, texture: Texture) {
+        match name {
+            "Player Front" => self.player.texture_front = Some(texture),
+            "Player Left" => self.player.texture_left = Some(texture),
+            "Player Right" => self.player.texture_right = Some(texture),
+            "City Background" => self.world.bg_texture = Some(texture),
+            "Gaster Standing" => self.world.npc_gaster_standing = Some(texture),
+            "Gaster Talking" => self.world.npc_gaster_talking = Some(texture),
+            "Rarity" => self.world.rarity_texture = Some(texture),
+            "Eilish" => self.world.eilish_texture = Some(texture),
+            "Sans" => self.world.sans_texture = Some(texture),
+            "Sans Combat" => self.world.sans_combat_texture = Some(texture),
+            "Sans Shrug" => self.world._sans_shrug_texture = Some(texture),
+            "Sans Handshake" => self.world.sans_handshake_texture = Some(texture),
+            "Heart" => self.heart_texture = Some(texture),
+            "Music Box" => self.world.musicbox_texture = Some(texture),
+            "Ayasofya Entrance" => self.world.ayasofya_giris_texture = Some(texture),
+            "Ayasofya Interior" => self.world.ayasofya_ici_texture = Some(texture),
+            "Bone" => self.bone_texture = Some(texture),
+            "Player Fes" => self.player.texture_fes = Some(texture),
+            "Player Takke" => self.player.texture_takke = Some(texture),
+            _ => {}
         }
     }
 
-    pub fn is_asset_loaded(&self, index: usize) -> bool {
-        match index {
-            0 => self.player.texture_front.is_some(),
-            1 => self.player.texture_left.is_some(),
-            2 => self.player.texture_right.is_some(),
-            3 => self.world.bg_texture.is_some(),
-            4 => self.world.npc_gaster_standing.is_some(),
-            5 => self.world.npc_gaster_talking.is_some(),
-            6 => self.world.rarity_texture.is_some(),
-            7 => self.world.eilish_texture.is_some(),
-            8 => self.world.sans_texture.is_some(),
-            9 => self.world.sans_combat_texture.is_some(),
-            10 => self.world.sans_shrug_texture.is_some(),
-            11 => self.world.sans_handshake_texture.is_some(),
-            12 => self.heart_texture.is_some(),
-            13 => self.world.musicbox_texture.is_some(),
-            14 => self.world.music_track.is_some(),
-            15 => self.world.ayasofya_giris_texture.is_some(),
-            16 => self.world.ayasofya_ici_texture.is_some(),
-            17 => self.bone_texture.is_some(),
-            18 => self.player.texture_fes.is_some(),
-            19 => self.player.texture_takke.is_some(),
-            _ => false,
+    pub fn assign_sound(&mut self, name: &str, sound: Sound) {
+        if name == "Music Track" {
+            self.world.music_track = Some(sound);
         }
     }
 }

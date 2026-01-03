@@ -40,7 +40,7 @@ pub struct WorldState {
     pub sans_pos: Vec2<f32>,
     pub sans_texture: Option<Texture>,
     pub sans_combat_texture: Option<Texture>,
-    pub sans_shrug_texture: Option<Texture>,
+    pub _sans_shrug_texture: Option<Texture>,
     pub sans_handshake_texture: Option<Texture>,
 
     // Ayasofya
@@ -83,7 +83,7 @@ impl WorldState {
             sans_pos: Vec2::new(600.0, 300.0),
             sans_texture: None,
             sans_combat_texture: None,
-            sans_shrug_texture: None,
+            _sans_shrug_texture: None,
             sans_handshake_texture: None,
 
             ayasofya_giris_texture: None,
