@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y mingw-w64 zip
+          sudo apt-get install -y mingw-w64 p7zip-full
       - name: Install Rust target
         run: rustup target add x86_64-pc-windows-gnu
       - name: Setup SDL3
@@ -53,9 +53,9 @@ jobs:
           echo "SDL3_DIR=$(pwd)/SDL3-3.2.30/x86_64-w64-mingw32" >> $GITHUB_ENV
       - name: Setup FFmpeg
         run: |
-          wget https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-shared.zip
-          unzip -q ffmpeg-master-latest-win64-gpl-shared.zip
-          mv ffmpeg-master-latest-win64-gpl-shared ffmpeg-win64
+          wget https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z
+          7z x ffmpeg-release-full-shared.7z
+          mv ffmpeg-*-shared ffmpeg-win64
           echo "FFMPEG_DIR=$(pwd)/ffmpeg-win64" >> $GITHUB_ENV
       - name: Build Release
         run: |
