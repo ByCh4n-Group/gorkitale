@@ -460,7 +460,7 @@ fn draw_credits(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
     );
 
     let credits = [
-        "Developed by: lazypwny751, Bumbleshot, GitHub Copilot",
+        "Developed by: lazypwny751, Bumbleshot, GitHub Copilot and <You>!",
         "Engine:       Tetra (Rust)",
         "Code:         GitHub Copilot, lazypwny751",
         "Lore:         Bumbleshot, lazypwny751",

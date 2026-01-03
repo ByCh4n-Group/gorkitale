@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libasound2-dev libavcodec-dev libavformat-dev libswscale-dev libavutil-dev
+          sudo apt-get install -y libasound2-dev libavcodec-dev libavformat-dev libswscale-dev libavutil-dev libavfilter-dev libavdevice-dev
       - name: Setup SDL3
         id: sdl
         uses: libsdl-org/setup-sdl@main
@@ -51,19 +51,26 @@ jobs:
           wget https://github.com/libsdl-org/SDL/releases/download/release-3.2.30/SDL3-devel-3.2.30-mingw.tar.gz
           tar xzf SDL3-devel-3.2.30-mingw.tar.gz
           echo "SDL3_DIR=$(pwd)/SDL3-3.2.30/x86_64-w64-mingw32" >> $GITHUB_ENV
+      - name: Setup FFmpeg
+        run: |
+          wget https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-shared.zip
+          unzip -q ffmpeg-master-latest-win64-gpl-shared.zip
+          mv ffmpeg-master-latest-win64-gpl-shared ffmpeg-win64
+          echo "FFMPEG_DIR=$(pwd)/ffmpeg-win64" >> $GITHUB_ENV
       - name: Build Release
         run: |
-          export LIBRARY_PATH="$SDL3_DIR/lib:$LIBRARY_PATH"
-          export RUSTFLAGS="-L native=$SDL3_DIR/lib"
+          export LIBRARY_PATH="$SDL3_DIR/lib:$FFMPEG_DIR/lib:$LIBRARY_PATH"
+          export RUSTFLAGS="-L native=$SDL3_DIR/lib -L native=$FFMPEG_DIR/lib"
           export SDL3_NO_PKG_CONFIG=1
           make release-windows
           
-          # Bundle SDL3.dll
+          # Bundle DLLs
           cp $SDL3_DIR/bin/SDL3.dll releases/windows/gorkitale/
+          cp $FFMPEG_DIR/bin/*.dll releases/windows/gorkitale/
           
-          # Update the zip file to include SDL3.dll
+          # Update the zip file
           cd releases/windows
-          zip -u ../gorkitale-windows-*.zip gorkitale/SDL3.dll
+          zip -u ../gorkitale-windows-*.zip gorkitale/*.dll
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
