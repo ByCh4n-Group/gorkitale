@@ -62,6 +62,8 @@ jobs:
           export LIBRARY_PATH="$SDL3_DIR/lib:$FFMPEG_DIR/lib:$LIBRARY_PATH"
           export RUSTFLAGS="-L native=$SDL3_DIR/lib -L native=$FFMPEG_DIR/lib"
           export SDL3_NO_PKG_CONFIG=1
+          export FFMPEG_NO_PKG_CONFIG=1
+          export BINDGEN_EXTRA_CLANG_ARGS="-I$FFMPEG_DIR/include --target=x86_64-pc-windows-gnu"
           make release-windows
           
           # Bundle DLLs
