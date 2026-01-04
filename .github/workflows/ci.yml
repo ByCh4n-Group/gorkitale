@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,21 +13,20 @@ jobs:
   clippy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libasound2-dev libavcodec-dev libavformat-dev libswscale-dev libavutil-dev libavfilter-dev libavdevice-dev
-    - name: Setup SDL3
-      id: sdl
-      uses: libsdl-org/setup-sdl@main
-      with:
-        install-linux-dependencies: true
-        version: 3.2.30
-    - name: Run Clippy
-      run: |
-        export PKG_CONFIG_PATH=${{ steps.sdl.outputs.prefix }}/lib/pkgconfig:$PKG_CONFIG_PATH
-        export LIBRARY_PATH=${{ steps.sdl.outputs.prefix }}/lib:$LIBRARY_PATH
-        export LD_LIBRARY_PATH=${{ steps.sdl.outputs.prefix }}/lib:$LD_LIBRARY_PATH
-        export RUSTFLAGS="-L native=${{ steps.sdl.outputs.prefix }}/lib"
-        cargo clippy -- -D warnings
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libavcodec-dev libavformat-dev libswscale-dev libavutil-dev libavfilter-dev libavdevice-dev
+      - name: Setup SDL3
+        id: sdl
+        uses: libsdl-org/setup-sdl@main
+        with:
+          install-linux-dependencies: true
+          version: 3.2.30
+      - name: Run Clippy
+        env:
+          PKG_CONFIG_PATH: ${{ steps.sdl.outputs.prefix }}/lib/pkgconfig
+          LIBRARY_PATH: ${{ steps.sdl.outputs.prefix }}/lib
+          LD_LIBRARY_PATH: ${{ steps.sdl.outputs.prefix }}/lib
+          RUSTFLAGS: -L native=${{ steps.sdl.outputs.prefix }}/lib
+        run: cargo clippy -- -D warnings

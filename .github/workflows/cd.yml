@@ -13,10 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
       - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libasound2-dev libavcodec-dev libavformat-dev libswscale-dev libavutil-dev libavfilter-dev libavdevice-dev
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libavcodec-dev libavformat-dev libswscale-dev libavutil-dev libavfilter-dev libavdevice-dev
       - name: Setup SDL3
         id: sdl
         uses: libsdl-org/setup-sdl@main
@@ -24,12 +23,12 @@ jobs:
           install-linux-dependencies: true
           version: 3.2.30
       - name: Build Release
-        run: |
-          export PKG_CONFIG_PATH=${{ steps.sdl.outputs.prefix }}/lib/pkgconfig:$PKG_CONFIG_PATH
-          export LIBRARY_PATH=${{ steps.sdl.outputs.prefix }}/lib:$LIBRARY_PATH
-          export LD_LIBRARY_PATH=${{ steps.sdl.outputs.prefix }}/lib:$LD_LIBRARY_PATH
-          export RUSTFLAGS="-L native=${{ steps.sdl.outputs.prefix }}/lib"
-          make release-linux
+        env:
+          PKG_CONFIG_PATH: ${{ steps.sdl.outputs.prefix }}/lib/pkgconfig
+          LIBRARY_PATH: ${{ steps.sdl.outputs.prefix }}/lib
+          LD_LIBRARY_PATH: ${{ steps.sdl.outputs.prefix }}/lib
+          RUSTFLAGS: -L native=${{ steps.sdl.outputs.prefix }}/lib
+        run: make release-linux
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -40,39 +39,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: windows
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y mingw-w64 p7zip-full
-      - name: Install Rust target
-        run: rustup target add x86_64-pc-windows-gnu
-      - name: Setup SDL3
+          sudo apt-get update && sudo apt-get install -y mingw-w64 p7zip-full
+          rustup target add x86_64-pc-windows-gnu
+      - name: Setup SDL3 & FFmpeg
         run: |
-          wget https://github.com/libsdl-org/SDL/releases/download/release-3.2.30/SDL3-devel-3.2.30-mingw.tar.gz
+          wget -q https://github.com/libsdl-org/SDL/releases/download/release-3.2.30/SDL3-devel-3.2.30-mingw.tar.gz
           tar xzf SDL3-devel-3.2.30-mingw.tar.gz
           echo "SDL3_DIR=$(pwd)/SDL3-3.2.30/x86_64-w64-mingw32" >> $GITHUB_ENV
-      - name: Setup FFmpeg
-        run: |
-          wget https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z
-          7z x ffmpeg-release-full-shared.7z
+          
+          wget -q https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z
+          7z x -y ffmpeg-release-full-shared.7z > /dev/null
           mv ffmpeg-*-shared ffmpeg-win64
           echo "FFMPEG_DIR=$(pwd)/ffmpeg-win64" >> $GITHUB_ENV
       - name: Build Release
+        env:
+          LIBRARY_PATH: ${{ env.SDL3_DIR }}/lib:${{ env.FFMPEG_DIR }}/lib
+          RUSTFLAGS: -L native=${{ env.SDL3_DIR }}/lib -L native=${{ env.FFMPEG_DIR }}/lib
+          SDL3_NO_PKG_CONFIG: 1
+          FFMPEG_NO_PKG_CONFIG: 1
+          BINDGEN_EXTRA_CLANG_ARGS: -I${{ env.FFMPEG_DIR }}/include --target=x86_64-pc-windows-gnu
         run: |
-          export LIBRARY_PATH="$SDL3_DIR/lib:$FFMPEG_DIR/lib:$LIBRARY_PATH"
-          export RUSTFLAGS="-L native=$SDL3_DIR/lib -L native=$FFMPEG_DIR/lib"
-          export SDL3_NO_PKG_CONFIG=1
-          export FFMPEG_NO_PKG_CONFIG=1
-          export BINDGEN_EXTRA_CLANG_ARGS="-I$FFMPEG_DIR/include --target=x86_64-pc-windows-gnu"
           make release-windows
-          
-          # Bundle DLLs
-          cp $SDL3_DIR/bin/SDL3.dll releases/windows/gorkitale/
-          cp $FFMPEG_DIR/bin/*.dll releases/windows/gorkitale/
-          
-          # Update the zip file
-          cd releases/windows
-          zip -u ../gorkitale-windows-*.zip gorkitale/*.dll
+          cp $SDL3_DIR/bin/SDL3.dll $FFMPEG_DIR/bin/*.dll releases/windows/gorkitale/
+          cd releases/windows && zip -u ../gorkitale-windows-*.zip gorkitale/*.dll
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -84,13 +78,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install LaTeX
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-lang-european
+        run: sudo apt-get update && sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-lang-european
       - name: Build Book
         run: |
           make -C docs/the_lore
-          
           VERSION=${GITHUB_REF_NAME#v}
           mkdir the_book
           cp docs/the_lore/tr/main.pdf the_book/gorkitale_v${VERSION}_book-tr.pdf
@@ -108,8 +99,6 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - name: Display structure of downloaded files
-        run: ls -R artifacts
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
