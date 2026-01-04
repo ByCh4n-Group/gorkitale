@@ -57,13 +57,12 @@ jobs:
           mv ffmpeg-*-shared ffmpeg-win64
           echo "FFMPEG_DIR=$(pwd)/ffmpeg-win64" >> $GITHUB_ENV
       - name: Build Release
-        env:
-          LIBRARY_PATH: ${{ env.SDL3_DIR }}/lib:${{ env.FFMPEG_DIR }}/lib
-          RUSTFLAGS: -L native=${{ env.SDL3_DIR }}/lib -L native=${{ env.FFMPEG_DIR }}/lib
-          SDL3_NO_PKG_CONFIG: 1
-          FFMPEG_NO_PKG_CONFIG: 1
-          BINDGEN_EXTRA_CLANG_ARGS: -I${{ env.FFMPEG_DIR }}/include --target=x86_64-pc-windows-gnu
         run: |
+          export LIBRARY_PATH="$SDL3_DIR/lib:$FFMPEG_DIR/lib"
+          export RUSTFLAGS="-L native=$SDL3_DIR/lib -L native=$FFMPEG_DIR/lib"
+          export SDL3_NO_PKG_CONFIG=1
+          export FFMPEG_NO_PKG_CONFIG=1
+          export BINDGEN_EXTRA_CLANG_ARGS="-I$FFMPEG_DIR/include --target=x86_64-pc-windows-gnu"
           make release-windows
           cp $SDL3_DIR/bin/SDL3.dll $FFMPEG_DIR/bin/*.dll releases/windows/gorkitale/
           cd releases/windows && zip -u ../gorkitale-windows-*.zip gorkitale/*.dll
