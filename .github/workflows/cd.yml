@@ -44,7 +44,9 @@ jobs:
           key: windows
       - name: Install dependencies
         run: |
-          sudo apt-get update && sudo apt-get install -y mingw-w64 p7zip-full
+          sudo apt-get update && sudo apt-get install -y mingw-w64 p7zip-full clang libclang-dev
+          # Install FFmpeg dev headers for bindgen (runs on Linux host)
+          sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev libavutil-dev libavfilter-dev libavdevice-dev
           rustup target add x86_64-pc-windows-gnu
       - name: Setup SDL3 & FFmpeg
         run: |
@@ -52,17 +54,10 @@ jobs:
           tar xzf SDL3-devel-3.2.30-mingw.tar.gz
           echo "SDL3_DIR=$(pwd)/SDL3-3.2.30/x86_64-w64-mingw32" >> $GITHUB_ENV
           
-          # Download Shared (DLLs)
+          # Download Windows FFmpeg (DLLs and libs for linking)
           wget -q https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z
           7z x -y ffmpeg-release-full-shared.7z > /dev/null
           mv ffmpeg-*-shared ffmpeg-win64
-          
-          # Download Dev (Headers/Libs)
-          wget -q https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-release-full-shared-dev.7z
-          7z x -y ffmpeg-release-full-shared-dev.7z > /dev/null
-          cp -r ffmpeg-*-shared-dev/include ffmpeg-win64/
-          cp -r ffmpeg-*-shared-dev/lib ffmpeg-win64/
-          
           echo "FFMPEG_DIR=$(pwd)/ffmpeg-win64" >> $GITHUB_ENV
       - name: Build Release
         run: |
@@ -70,7 +65,8 @@ jobs:
           export RUSTFLAGS="-L native=$SDL3_DIR/lib -L native=$FFMPEG_DIR/lib"
           export SDL3_NO_PKG_CONFIG=1
           export FFMPEG_NO_PKG_CONFIG=1
-          export BINDGEN_EXTRA_CLANG_ARGS="-I$FFMPEG_DIR/include --target=x86_64-pc-windows-gnu"
+          # Use Linux headers for bindgen, Windows libs for linking
+          export BINDGEN_EXTRA_CLANG_ARGS="--target=x86_64-pc-windows-gnu"
           make release-windows
           cp $SDL3_DIR/bin/SDL3.dll $FFMPEG_DIR/bin/*.dll releases/windows/gorkitale/
           cd releases/windows && zip -u ../gorkitale-windows-*.zip gorkitale/*.dll
