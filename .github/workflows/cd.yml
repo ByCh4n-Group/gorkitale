@@ -52,13 +52,17 @@ jobs:
           tar xzf SDL3-devel-3.2.30-mingw.tar.gz
           echo "SDL3_DIR=$(pwd)/SDL3-3.2.30/x86_64-w64-mingw32" >> $GITHUB_ENV
           
+          # Download Shared (DLLs)
           wget -q https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z
           7z x -y ffmpeg-release-full-shared.7z > /dev/null
           mv ffmpeg-*-shared ffmpeg-win64
-          # Download FFmpeg dev package for headers
-          wget -q https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z -O ffmpeg-shared.7z
-          7z x -y ffmpeg-shared.7z -offmpeg-tmp > /dev/null
-          cp -r ffmpeg-tmp/ffmpeg-*/include ffmpeg-win64/ 2>/dev/null || true
+          
+          # Download Dev (Headers/Libs)
+          wget -q https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-release-full-shared-dev.7z
+          7z x -y ffmpeg-release-full-shared-dev.7z > /dev/null
+          cp -r ffmpeg-*-shared-dev/include ffmpeg-win64/
+          cp -r ffmpeg-*-shared-dev/lib ffmpeg-win64/
+          
           echo "FFMPEG_DIR=$(pwd)/ffmpeg-win64" >> $GITHUB_ENV
       - name: Build Release
         run: |
@@ -66,9 +70,7 @@ jobs:
           export RUSTFLAGS="-L native=$SDL3_DIR/lib -L native=$FFMPEG_DIR/lib"
           export SDL3_NO_PKG_CONFIG=1
           export FFMPEG_NO_PKG_CONFIG=1
-          export BINDGEN_EXTRA_CLANG_ARGS="-I$FFMPEG_DIR/include -I/usr/share/mingw-w64/include --target=x86_64-pc-windows-gnu -D__STDC_CONSTANT_MACROS"
-          # Install FFmpeg headers from Ubuntu for bindgen
-          sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev libavutil-dev libavfilter-dev libavdevice-dev
+          export BINDGEN_EXTRA_CLANG_ARGS="-I$FFMPEG_DIR/include --target=x86_64-pc-windows-gnu"
           make release-windows
           cp $SDL3_DIR/bin/SDL3.dll $FFMPEG_DIR/bin/*.dll releases/windows/gorkitale/
           cd releases/windows && zip -u ../gorkitale-windows-*.zip gorkitale/*.dll
