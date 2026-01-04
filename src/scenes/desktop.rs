@@ -201,9 +201,9 @@ pub fn update(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
 
     // Ayasofya Interaction (Stage 3)
     if state.world.current_stage == 3 {
-        // Door area: Expanded range based on user feedback
-        // Massive range to ensure it's easy to enter
-        let door_rect = Rectangle::new(200.0, 200.0, 400.0, 400.0);
+        // Door area: Kapı ortadan aşağıya doğru uzanıyor
+        // X: 300-500 (orta), Y: 150-500 (yukarıdan aşağıya)
+        let door_rect = Rectangle::new(300.0, 150.0, 200.0, 350.0);
         if state.player.pos.x >= door_rect.x
             && state.player.pos.x <= door_rect.x + door_rect.width
             && state.player.pos.y >= door_rect.y
@@ -341,7 +341,8 @@ pub fn draw(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
 
     // Ayasofya Door Prompt (Stage 3)
     if state.world.current_stage == 3 {
-        let door_rect = Rectangle::new(350.0, 250.0, 100.0, 100.0);
+        // Kapı alanı: ortadan aşağıya
+        let door_rect = Rectangle::new(300.0, 150.0, 200.0, 350.0);
         if state.player.pos.x >= door_rect.x
             && state.player.pos.x <= door_rect.x + door_rect.width
             && state.player.pos.y >= door_rect.y
@@ -354,7 +355,7 @@ pub fn draw(ctx: &mut Context, state: &mut GameState) -> tetra::Result {
             text.draw(
                 ctx,
                 DrawParams::new()
-                    .position(Vec2::new(400.0 - width / 2.0, 200.0))
+                    .position(Vec2::new(400.0 - width / 2.0, 130.0))
                     .color(Color::WHITE),
             );
         }

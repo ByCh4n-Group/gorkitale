@@ -1,13 +1,13 @@
 [package]
 name = "gorkitale"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 discord-rich-presence = "1.0.0"
 tetra = "0.9.1"
 rand = "0.9.2"
-video-rs = { version = "0.10.5", features = ["ndarray"] }
+gif = "0.14.1"
 
 [profile.release]
 opt-level = 3

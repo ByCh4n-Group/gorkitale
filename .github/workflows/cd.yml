@@ -9,13 +9,42 @@ permissions:
   contents: write
 
 jobs:
-  build-linux:
+  generate-assets:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check if GIFs already exist
+        id: check
+        run: |
+          if [ -f "assets/intro_tr.gif" ] && [ -f "assets/intro_en.gif" ]; then
+            echo "gifs_exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "gifs_exist=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Generate GIFs from videos
+        if: steps.check.outputs.gifs_exist == 'false'
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          chmod +x scripts/mp42gif.sh
+          ./scripts/mp42gif.sh
+      - name: Upload assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: intro-assets
+          path: assets/*.gif
+
+  build-linux:
+    needs: generate-assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: intro-assets
+          path: assets
       - uses: Swatinem/rust-cache@v2
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libavcodec-dev libavformat-dev libswscale-dev libavutil-dev libavfilter-dev libavdevice-dev
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
       - name: Setup SDL3
         id: sdl
         uses: libsdl-org/setup-sdl@main
@@ -36,39 +65,33 @@ jobs:
           path: releases/*.tar.gz
 
   build-windows:
+    needs: generate-assets
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: intro-assets
+          path: assets
       - uses: Swatinem/rust-cache@v2
         with:
           key: windows
       - name: Install dependencies
         run: |
-          sudo apt-get update && sudo apt-get install -y mingw-w64 p7zip-full clang libclang-dev
-          # Install FFmpeg dev headers for bindgen (runs on Linux host)
-          sudo apt-get install -y libavcodec-dev libavformat-dev libswscale-dev libavutil-dev libavfilter-dev libavdevice-dev
+          sudo apt-get update && sudo apt-get install -y mingw-w64
           rustup target add x86_64-pc-windows-gnu
-      - name: Setup SDL3 & FFmpeg
+      - name: Setup SDL3
         run: |
           wget -q https://github.com/libsdl-org/SDL/releases/download/release-3.2.30/SDL3-devel-3.2.30-mingw.tar.gz
           tar xzf SDL3-devel-3.2.30-mingw.tar.gz
           echo "SDL3_DIR=$(pwd)/SDL3-3.2.30/x86_64-w64-mingw32" >> $GITHUB_ENV
-          
-          # Download Windows FFmpeg (DLLs and libs for linking)
-          wget -q https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full-shared.7z
-          7z x -y ffmpeg-release-full-shared.7z > /dev/null
-          mv ffmpeg-*-shared ffmpeg-win64
-          echo "FFMPEG_DIR=$(pwd)/ffmpeg-win64" >> $GITHUB_ENV
       - name: Build Release
         run: |
-          export LIBRARY_PATH="$SDL3_DIR/lib:$FFMPEG_DIR/lib"
-          export RUSTFLAGS="-L native=$SDL3_DIR/lib -L native=$FFMPEG_DIR/lib"
+          export LIBRARY_PATH="$SDL3_DIR/lib"
+          export RUSTFLAGS="-L native=$SDL3_DIR/lib"
           export SDL3_NO_PKG_CONFIG=1
-          export FFMPEG_NO_PKG_CONFIG=1
-          # Use Linux headers for bindgen, Windows libs for linking
-          export BINDGEN_EXTRA_CLANG_ARGS="--target=x86_64-pc-windows-gnu"
           make release-windows
-          cp $SDL3_DIR/bin/SDL3.dll $FFMPEG_DIR/bin/*.dll releases/windows/gorkitale/
+          cp $SDL3_DIR/bin/SDL3.dll releases/windows/gorkitale/
           cd releases/windows && zip -u ../gorkitale-windows-*.zip gorkitale/*.dll
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
