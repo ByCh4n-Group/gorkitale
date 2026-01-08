@@ -13,10 +13,11 @@ TODO:
 - (idk but it's required)
 - the lore.
 
-<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/b035f7df-9ae8-4811-bd26-8ff1b602f8fd" />
-<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/400f9206-e000-4c9c-b972-8c961cdea390" />
-<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/55b85248-3123-485b-890d-c2975b00cc15" />
-<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/362dc794-bf10-4634-9197-f4b259b213cc" />
+|   |   |
+|---|---|
+| ![](https://github.com/user-attachments/assets/b035f7df-9ae8-4811-bd26-8ff1b602f8fd) | ![](https://github.com/user-attachments/assets/400f9206-e000-4c9c-b972-8c961cdea390) |
+| ![](https://github.com/user-attachments/assets/55b85248-3123-485b-890d-c2975b00cc15) | ![](https://github.com/user-attachments/assets/362dc794-bf10-4634-9197-f4b259b213cc) |
+
 
 ## Overview
 
