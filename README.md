@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/ByCh4n-Group/gorkitale/actions/workflows/ci.yml/badge.svg)](https://github.com/ByCh4n-Group/gorkitale/actions/workflows/ci.yml)
 
-A retro-style Linux operating system simulation and game built with Rust and Tetra.
+A retro-style takfir or teblig game.
 
 TODO:
 - multi lang support for memes and the entire game for en and tr.
@@ -13,43 +13,14 @@ TODO:
 - (idk but it's required)
 - the lore.
 
-| | | |
-|:---:|:---:|:---:|
-| <img width="100%" alt="image" src="https://github.com/user-attachments/assets/e5f8997f-7297-4ace-84d7-21c4eee3f7ef" /> | <img width="100%" alt="image" src="https://github.com/user-attachments/assets/b272ffd5-6580-478e-885d-b77ba425c696" /> | <img width="100%" alt="image" src="https://github.com/user-attachments/assets/d5d825dd-4db6-4f59-9aa2-29b7f6100f45" /> |
-| <img width="100%" alt="image" src="https://github.com/user-attachments/assets/8774a62a-4fd1-4cde-b05e-42cdb7f801bc" /> | <img width="100%" alt="image" src="https://github.com/user-attachments/assets/9d07eab0-d351-4aa4-99bb-d2eac5e0701d" /> | <img width="100%" alt="image" src="https://github.com/user-attachments/assets/acaa32e1-abc6-4cd8-a72d-fb8ac997feb7" /> |
-| <img width="100%" alt="image" src="https://github.com/user-attachments/assets/c199c901-a246-4b2e-a996-281e2107e0fd" /> | <img width="100%" alt="image" src="https://github.com/user-attachments/assets/28590cd6-f869-437f-9d3d-8eade34afe78" /> | |
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/b035f7df-9ae8-4811-bd26-8ff1b602f8fd" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/400f9206-e000-4c9c-b972-8c961cdea390" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/55b85248-3123-485b-890d-c2975b00cc15" />
+<img width="800" height="632" alt="image" src="https://github.com/user-attachments/assets/362dc794-bf10-4634-9197-f4b259b213cc" />
 
 ## Overview
 
-Welcome to **Gorkitale 1.0 LTS**. This project simulates the experience of booting up an old-school Linux machine, complete with systemd boot logs and a TTY login screen.
-
-Beyond the terminal lies a surreal adventure. Log in, explore the system, and launch into a world where you must interact with mysterious characters and uncover the secrets of the "VibeCoded" kernel.
-
-## Features
-
-*   **Realistic Boot Sequence:** Watch the system services start up with a nostalgic typing effect.
-*   **Interactive Login:** Log in as `root` or create your own user to access the system.
-*   **Functional Shell:** A working terminal environment where you can run commands like `neofetch`, `users`, and `startx`.
-*   **Adventure Mode:** Launch the graphical game world to explore different stages and interact with NPCs.
-*   **Story Elements:** Engage with characters and uncover a narrative involving "Teblig", "Cihad", and "Tekfir".
-*   **Combat & Defense:** Defend yourself against threats in specific game stages.
-
-## Shell Commands
-
-The in-game terminal supports a variety of commands to interact with the system:
-
-*   `startx`: Starts the graphical adventure mode (Game).
-*   `adduser <username>`: Creates a new user profile.
-*   `users`: Lists all registered users on the system.
-*   `neofetch`: Displays system information and the VibeCoded logo.
-*   `music`: Toggles the background music (Disco Mode).
-*   `config`: Opens the system configuration menu.
-*   `logout`: Logs out of the current session.
-*   `reboot`: Reboots the simulated system.
-*   `shutdown`: Powers off the system.
-*   `clear`: Clears the terminal screen.
-*   `whoami`: Displays the current user's name.
-*   `uname -a`: Prints system kernel information.
+Welcome to **Gorkitale 1.0 LTS**..
 
 ## Combat & Dialogues
 
@@ -90,7 +61,7 @@ You can try to preach and guide them to the right path. Results may vary:
 
 ### Prerequisites
 *   Rust (latest stable version)
-*   SDL2 development libraries (required by Tetra)
+*   SDL3 development libraries (required by Tetra)
 
 ### Running the Game
 ```bash
@@ -101,14 +72,9 @@ cargo run
 
 ### Controls
 
-**System (Boot/Shell):**
-*   `Enter`: Confirm / Execute command
-*   `Esc`: Go back
-*   `Up/Down Arrows`: Navigate menus
-
 **Adventure Mode:**
 *   `WASD` or `Arrow Keys`: Move character
-*   `Space`: Interact
+*   `Enter`: Interact
 
 ## License
 
